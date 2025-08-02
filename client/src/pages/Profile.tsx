@@ -1,7 +1,7 @@
 import UserCard from "@/components/UserCard";
 import UserForm from "@/forms/UserForm/UserForm";
 
-const AdminProfile = () => {
+const Profile = () => {
   return (
     <div className="flex max-w-full flex-row gap-4 flex-1/2">
       <UserCard />
@@ -10,4 +10,4 @@ const AdminProfile = () => {
   );
 };
 
-export default AdminProfile;
+export default Profile;

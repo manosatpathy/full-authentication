@@ -9,9 +9,8 @@ import ForgetPassword from "./pages/auth/ForgetPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import VerifyOTP from "./pages/auth/VerifyOtp";
 import PageNotFound from "./pages/PageNotFound";
-import UserProfile from "./pages/userDashboard/userProfile";
-import AdminProfile from "./pages/adminDashboard/AdminProfile";
-import AdminDashboard from "./pages/adminDashboard/Dashboard";
+import Profile from "./pages/Profile";
+import AdminDashboard from "./pages/Dashboard";
 import AuthenticatedRoute from "./utils/protectedRoutes/AuthenticatedRoute";
 import TokenProtectedRoute from "./utils/protectedRoutes/TokenProtectedRoute";
 import UserIdProtectedRoute from "./utils/protectedRoutes/UserIdProtectedRoute";
@@ -39,11 +38,11 @@ function App() {
             },
             {
               path: "user-profile",
-              element: <UserProfile />,
+              element: <Profile />,
             },
             {
               path: "admin-profile",
-              element: <AdminProfile />,
+              element: <Profile />,
             },
           ],
         },
