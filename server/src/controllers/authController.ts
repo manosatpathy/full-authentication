@@ -246,3 +246,42 @@ export const logoutController = async (
     next(error);
   }
 };
+
+export const checkUsernameAvailability = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      return next(new ErrorHandler("UserId missing in request", 401));
+    }
+
+    const { newUsername } = req.body;
+
+    const userExist = await findUser({ username: newUsername });
+
+    if (userExist?._id.toString() === userId) {
+      return res.status(200).json({
+        available: true,
+        isSame: true,
+        message: "This is your current username",
+        username: newUsername,
+      });
+    }
+
+    if (userExist) {
+      throw new ErrorHandler("username already exist", 422);
+    }
+
+    res.status(200).json({
+      available: true,
+      isSame: false,
+      message: "Username is available",
+      username: newUsername,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
