@@ -1,4 +1,5 @@
 import { Types } from "mongoose";
+import { UserType } from "./../models/userModel";
 
 export interface UserPayload {
   _id: Types.ObjectId;
@@ -23,4 +24,10 @@ export type FindUserType = {
   id?: string;
   email?: string;
   username?: string;
+};
+
+export type UpdateFields = {
+  user: UserType;
+  newUsername?: string;
+  newPassword?: string;
 };

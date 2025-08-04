@@ -18,6 +18,11 @@ import User from "../models/userModel";
 import { sendForgetPasswordLink } from "../services/mailServices";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
+import { updateUserFields, validateUpdateRequest } from "../utils/validation";
+import {
+  validateCurrentPassword,
+  validateUsernameAvailability,
+} from "../services/profileService";
 
 export const registerController = async (
   req: Request,
@@ -280,6 +285,59 @@ export const checkUsernameAvailability = async (
       isSame: false,
       message: "Username is available",
       username: newUsername,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+    const user = await findUser({ id: userId });
+
+    if (!userId || !user) {
+      throw new ErrorHandler("User not found", 404);
+    }
+
+    const { newUsername, currentPassword, newPassword } = req.body;
+
+    validateUpdateRequest(newUsername, newPassword);
+    await validateCurrentPassword(currentPassword, user.password);
+
+    let updatedFields = { usernameUpdated: false, passwordUpdated: false };
+
+    if (newUsername) {
+      const usernameCheck = await validateUsernameAvailability(
+        newUsername,
+        userId
+      );
+
+      if (!usernameCheck.isSame) {
+        const updates = updateUserFields({ user, newUsername });
+        updatedFields = { ...updatedFields, ...updates };
+      }
+    }
+    if (newPassword) {
+      const updates = updateUserFields({ user, newPassword });
+      updatedFields = { ...updatedFields, ...updates };
+    }
+
+    if (updatedFields.usernameUpdated || updatedFields.passwordUpdated) {
+      await user.save();
+    }
+
+    let message = "Profile updated successfully";
+    if (!updatedFields.usernameUpdated && !updatedFields.passwordUpdated) {
+      message = "No changes made";
+    }
+    res.status(200).json({
+      message,
+      updatedFields,
     });
   } catch (error) {
     next(error);

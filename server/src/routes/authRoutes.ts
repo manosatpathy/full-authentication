@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import {
+  checkUsernameAvailability,
   forgetPasswordController,
   getAllUsers,
   getCurrentUser,
@@ -8,6 +9,7 @@ import {
   refreshTokenController,
   registerController,
   resetPasswordController,
+  updateProfile,
   verifyMailController,
 } from "../controllers/authController";
 import { validateRequest } from "../middlewares/validationMiddleware";
@@ -17,6 +19,8 @@ import { loginSchema } from "../validators/loginSchema";
 import { authorize, verifyToken } from "../middlewares/authMiddleware";
 import loginLimiter from "../middlewares/loginLimiter";
 import { resetPasswordSchema } from "../validators/resetPasswordSchema";
+import { editProfileSchema } from "../validators/editProfileSchema";
+import { checkUsernameSchema } from "../validators/usernameSchema";
 
 const router = Router();
 
@@ -50,5 +54,18 @@ router.post(
 
 router.get("/me", verifyToken("access"), getCurrentUser);
 router.get("/users", verifyToken("access"), authorize("admin"), getAllUsers);
+
+router.get(
+  "/check-username",
+  verifyToken("access"),
+  validateRequest(checkUsernameSchema),
+  checkUsernameAvailability
+);
+router.post(
+  "/update-profile",
+  verifyToken("access"),
+  validateRequest(editProfileSchema),
+  updateProfile
+);
 
 export default router;
