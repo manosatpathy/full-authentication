@@ -19,7 +19,7 @@ import { loginSchema } from "../validators/loginSchema";
 import { authorize, verifyToken } from "../middlewares/authMiddleware";
 import loginLimiter from "../middlewares/loginLimiter";
 import { resetPasswordSchema } from "../validators/resetPasswordSchema";
-import { editProfileSchema } from "../validators/editProfileSchema";
+import { updateFieldsSchema } from "../validators/updateFieldsSchema";
 import { checkUsernameSchema } from "../validators/usernameSchema";
 
 const router = Router();
@@ -58,13 +58,13 @@ router.get("/users", verifyToken("access"), authorize("admin"), getAllUsers);
 router.get(
   "/check-username",
   verifyToken("access"),
-  validateRequest(checkUsernameSchema),
+  validateRequest(checkUsernameSchema, "query"),
   checkUsernameAvailability
 );
 router.post(
   "/update-profile",
   verifyToken("access"),
-  validateRequest(editProfileSchema),
+  validateRequest(updateFieldsSchema),
   updateProfile
 );
 

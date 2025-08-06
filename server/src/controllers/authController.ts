@@ -260,15 +260,15 @@ export const checkUsernameAvailability = async (
   try {
     const userId = req.user?.userId;
     if (!userId) {
-      return next(new ErrorHandler("UserId missing in request", 401));
+      throw new ErrorHandler("UserId missing in request", 401);
     }
 
-    const { newUsername } = req.body;
+    const newUsername = req.query.validatedQuery as string;
 
     const userExist = await findUser({ username: newUsername });
 
     if (userExist?._id.toString() === userId) {
-      return res.status(200).json({
+      res.status(200).json({
         available: true,
         isSame: true,
         message: "This is your current username",
