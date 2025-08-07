@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const editProfileSchema = z
+export const updateFieldsSchema = z
   .object({
     newUsername: z
       .string()
