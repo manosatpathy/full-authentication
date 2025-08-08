@@ -1,6 +1,7 @@
 import { ErrorHandler } from "../utils/errorHandler";
 import bcrypt from "bcrypt";
 import { findUser } from "./authServices";
+import User from "../models/userModel";
 
 export const validateCurrentPassword = async (
   currentPassword: string,
@@ -12,7 +13,7 @@ export const validateCurrentPassword = async (
   }
 };
 
-export const validateUsernameAvailability = async (
+export const validateAndUpdateUsername = async (
   newUsername: string,
   userId: string
 ) => {
@@ -30,9 +31,11 @@ export const validateUsernameAvailability = async (
     throw new ErrorHandler("Username already exists", 422);
   }
 
+  await User.findByIdAndUpdate(userId, { username: newUsername });
+
   return {
+    updated: true,
     isSame: false,
-    available: true,
-    message: "Username is available",
+    message: "Username updated successfully",
   };
 };

@@ -1,6 +1,5 @@
 import { Router, Request, Response } from "express";
 import {
-  checkUsernameAvailability,
   forgetPasswordController,
   getAllUsers,
   getCurrentUser,
@@ -9,7 +8,8 @@ import {
   refreshTokenController,
   registerController,
   resetPasswordController,
-  updateProfile,
+  updatePassword,
+  updateUsername,
   verifyMailController,
 } from "../controllers/authController";
 import { validateRequest } from "../middlewares/validationMiddleware";
@@ -59,13 +59,13 @@ router.get(
   "/check-username",
   verifyToken("access"),
   validateRequest(checkUsernameSchema, "query"),
-  checkUsernameAvailability
+  updateUsername
 );
 router.post(
   "/update-profile",
   verifyToken("access"),
   validateRequest(updateFieldsSchema),
-  updateProfile
+  updatePassword
 );
 
 export default router;

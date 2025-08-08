@@ -28,6 +28,5 @@ export type FindUserType = {
 
 export type UpdateFields = {
   user: UserType;
-  newUsername?: string;
-  newPassword?: string;
+  newPassword: string;
 };

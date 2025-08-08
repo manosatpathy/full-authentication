@@ -18,10 +18,10 @@ import User from "../models/userModel";
 import { sendForgetPasswordLink } from "../services/mailServices";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
-import { updateUserFields, validateUpdateRequest } from "../utils/validation";
+
 import {
+  validateAndUpdateUsername,
   validateCurrentPassword,
-  validateUsernameAvailability,
 } from "../services/profileService";
 
 export const registerController = async (
@@ -252,7 +252,7 @@ export const logoutController = async (
   }
 };
 
-export const checkUsernameAvailability = async (
+export const updateUsername = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -265,25 +265,21 @@ export const checkUsernameAvailability = async (
 
     const newUsername = req.query.validatedQuery as string;
 
-    const userExist = await findUser({ username: newUsername });
+    const validation = await validateAndUpdateUsername(newUsername, userId);
 
-    if (userExist?._id.toString() === userId) {
+    if (validation.isSame) {
       res.status(200).json({
         available: true,
         isSame: true,
-        message: "This is your current username",
+        message: validation.message,
         username: newUsername,
       });
     }
 
-    if (userExist) {
-      throw new ErrorHandler("username already exist", 422);
-    }
+    await User.findByIdAndUpdate(userId, { username: newUsername });
 
     res.status(200).json({
-      available: true,
-      isSame: false,
-      message: "Username is available",
+      message: "Username updated successfully.",
       username: newUsername,
     });
   } catch (error) {
@@ -291,7 +287,7 @@ export const checkUsernameAvailability = async (
   }
 };
 
-export const updateProfile = async (
+export const updatePassword = async (
   req: Request,
   res: Response,
   next: NextFunction
@@ -303,41 +299,14 @@ export const updateProfile = async (
     if (!userId || !user) {
       throw new ErrorHandler("User not found", 404);
     }
+    const { currentPassword, newPassword } = req.body;
 
-    const { newUsername, currentPassword, newPassword } = req.body;
-
-    validateUpdateRequest(newUsername, newPassword);
     await validateCurrentPassword(currentPassword, user.password);
+    user.password = newPassword;
+    await user.save();
 
-    let updatedFields = { usernameUpdated: false, passwordUpdated: false };
-
-    if (newUsername) {
-      const usernameCheck = await validateUsernameAvailability(
-        newUsername,
-        userId
-      );
-
-      if (!usernameCheck.isSame) {
-        const updates = updateUserFields({ user, newUsername });
-        updatedFields = { ...updatedFields, ...updates };
-      }
-    }
-    if (newPassword) {
-      const updates = updateUserFields({ user, newPassword });
-      updatedFields = { ...updatedFields, ...updates };
-    }
-
-    if (updatedFields.usernameUpdated || updatedFields.passwordUpdated) {
-      await user.save();
-    }
-
-    let message = "Profile updated successfully";
-    if (!updatedFields.usernameUpdated && !updatedFields.passwordUpdated) {
-      message = "No changes made";
-    }
     res.status(200).json({
-      message,
-      updatedFields,
+      message: "Password Changed successfully",
     });
   } catch (error) {
     next(error);
