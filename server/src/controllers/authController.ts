@@ -263,7 +263,7 @@ export const updateUsername = async (
       throw new ErrorHandler("UserId missing in request", 401);
     }
 
-    const newUsername = req.query.validatedQuery as string;
+    const newUsername = req.body;
 
     const validation = await validateAndUpdateUsername(newUsername, userId);
 

@@ -55,14 +55,14 @@ router.post(
 router.get("/me", verifyToken("access"), getCurrentUser);
 router.get("/users", verifyToken("access"), authorize("admin"), getAllUsers);
 
-router.get(
-  "/check-username",
+router.post(
+  "/update-username",
   verifyToken("access"),
-  validateRequest(checkUsernameSchema, "query"),
+  validateRequest(checkUsernameSchema),
   updateUsername
 );
 router.post(
-  "/update-profile",
+  "/update-password",
   verifyToken("access"),
   validateRequest(updateFieldsSchema),
   updatePassword
