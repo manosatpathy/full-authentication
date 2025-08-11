@@ -1,5 +1,6 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import {
+  checkUsername,
   forgetPasswordController,
   getAllUsers,
   getCurrentUser,
@@ -54,6 +55,13 @@ router.post(
 
 router.get("/me", verifyToken("access"), getCurrentUser);
 router.get("/users", verifyToken("access"), authorize("admin"), getAllUsers);
+
+router.get(
+  "/check-username",
+  verifyToken("access"),
+  validateRequest(checkUsernameSchema, "query"),
+  checkUsername
+);
 
 router.post(
   "/update-username",

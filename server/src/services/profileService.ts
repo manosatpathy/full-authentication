@@ -13,21 +13,54 @@ export const validateCurrentPassword = async (
   }
 };
 
-export const validateAndUpdateUsername = async (
-  newUsername: string,
+export const checkUsernameAvailability = async (
+  username: string,
   userId: string
 ) => {
-  const userExist = await findUser({ username: newUsername });
+  const userExist = await findUser({ username });
 
   if (userExist?._id.toString() === userId) {
     return {
-      isSame: true,
       available: true,
+      isSame: true,
       message: "This is your current username",
     };
   }
 
   if (userExist) {
+    return {
+      available: false,
+      isSame: false,
+      message: "Username already exists",
+    };
+  }
+
+  return {
+    available: true,
+    isSame: false,
+    message: "Username is available",
+  };
+};
+
+export const validateAndUpdateUsername = async (
+  newUsername: string,
+  userId: string
+) => {
+  const availabilityCheck = await checkUsernameAvailability(
+    newUsername,
+    userId
+  );
+
+  if (availabilityCheck.isSame) {
+    return {
+      updated: false,
+      isSame: true,
+      available: true,
+      message: availabilityCheck.message,
+    };
+  }
+
+  if (!availabilityCheck.available) {
     throw new ErrorHandler("Username already exists", 422);
   }
 
@@ -36,6 +69,7 @@ export const validateAndUpdateUsername = async (
   return {
     updated: true,
     isSame: false,
+    available: true,
     message: "Username updated successfully",
   };
 };

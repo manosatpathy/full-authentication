@@ -14,12 +14,12 @@ import {
   generateRefreshToken,
 } from "../utils/tokens";
 import { ErrorHandler } from "../utils/errorHandler";
-import User from "../models/userModel";
 import { sendForgetPasswordLink } from "../services/mailServices";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
 
 import {
+  checkUsernameAvailability,
   validateAndUpdateUsername,
   validateCurrentPassword,
 } from "../services/profileService";
@@ -252,6 +252,30 @@ export const logoutController = async (
   }
 };
 
+export const checkUsername = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+    if (!userId) {
+      throw new ErrorHandler("User not found", 401);
+    }
+
+    const username = req.validatedQuery?.username;
+    const result = await checkUsernameAvailability(username, userId);
+
+    res.status(200).json({
+      available: result.available,
+      isSame: result.isSame,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateUsername = async (
   req: Request,
   res: Response,
@@ -260,26 +284,17 @@ export const updateUsername = async (
   try {
     const userId = req.user?.userId;
     if (!userId) {
-      throw new ErrorHandler("UserId missing in request", 401);
+      throw new ErrorHandler("User not found", 401);
     }
 
-    const newUsername = req.body;
-
-    const validation = await validateAndUpdateUsername(newUsername, userId);
-
-    if (validation.isSame) {
-      res.status(200).json({
-        available: true,
-        isSame: true,
-        message: validation.message,
-        username: newUsername,
-      });
-    }
-
-    await User.findByIdAndUpdate(userId, { username: newUsername });
+    const { username: newUsername } = req.body;
+    const result = await validateAndUpdateUsername(newUsername, userId);
 
     res.status(200).json({
-      message: "Username updated successfully.",
+      updated: result.updated,
+      available: result.available,
+      isSame: result.isSame,
+      message: result.message,
       username: newUsername,
     });
   } catch (error) {
