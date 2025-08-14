@@ -9,6 +9,7 @@ export const registrationSchema = z
         /^[a-zA-Z0-9_]+$/,
         "Username can only contain letters, numbers, and underscores"
       )
+      .toLowerCase()
       .trim(),
     email: z.string().email("Invalid Mail Format").toLowerCase().trim(),
     password: z
