@@ -2,6 +2,8 @@ import type { RegistrationType } from "./schemas/registration";
 import axios from "axios";
 import axiosInstance from "./utils/AxiosInstance";
 import type { LoginFormType } from "./schemas/logIn";
+import type { UpdatePasswordType } from "./schemas/updatePassword";
+import type { UsernameType } from "./schemas/username";
 
 export const register = async (formData: RegistrationType) => {
   try {
@@ -144,6 +146,58 @@ export const resetPassword = async (resetData: {
     if (axios.isAxiosError(error)) {
       console.log(error);
       const message = error.response?.data?.message || "Password reset failed";
+      throw new Error(message);
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
+
+export const checkUsername = async (username: string) => {
+  try {
+    const response = await axiosInstance.get(
+      `/auth/check-username?newUsername=${username}`
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.log(error);
+      const message =
+        error.response?.data?.errors[0].message || "Error checking username";
+      throw new Error(message);
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
+
+export const updateUsername = async (payload: UsernameType) => {
+  try {
+    const { username } = payload;
+    const response = await axiosInstance.post(`/auth/update-username`, {
+      newUsername: username,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.log(error);
+      const message =
+        error.response?.data?.errors[0].message || "Error updating username";
+      throw new Error(message);
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
+
+export const updatePassword = async (updateFields: UpdatePasswordType) => {
+  try {
+    const response = await axiosInstance.post(
+      "/auth/update-password",
+      updateFields
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.log(error);
+      const message = error.response?.data?.message || "Error updating profile";
       throw new Error(message);
     }
     throw new Error("An unexpected error occurred");

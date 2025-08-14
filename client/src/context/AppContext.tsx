@@ -4,12 +4,12 @@ import { createContext, useContext, useEffect, useState } from "react";
 import * as apiClient from "../api-Client";
 import { useLogout } from "@/hooks/useLogout";
 
-type ToastMessage = {
+export type ToastMessage = {
   message: string;
   type: "SUCCESS" | "ERROR";
 };
 
-interface User {
+export interface User {
   _id: string;
   username: string;
   email: string;

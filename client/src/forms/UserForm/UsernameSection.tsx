@@ -1,4 +1,3 @@
-import { useAppContext } from "@/context/AppContext";
 import { useDebounce } from "@/hooks/useDebounce";
 import { usernameSchema, type UsernameType } from "@/schemas/username";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,14 +5,19 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as apiClient from "../../api-Client";
-import { Label } from "@radix-ui/react-dropdown-menu";
+import { Label } from "@radix-ui/react-label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Check, CheckIcon, Edit2, X } from "lucide-react";
+import type { ToastMessage, User } from "@/context/AppContext";
 
-const UsernameSection = () => {
+type UsernameSectionProps = {
+  user: User | null;
+  showToast: (toastMessage: ToastMessage) => void;
+};
+
+const UsernameSection = ({ user, showToast }: UsernameSectionProps) => {
   const [editingUsername, setEditingUsername] = useState(false);
-  const { user, showToast } = useAppContext();
   const queryClient = useQueryClient();
 
   const {
