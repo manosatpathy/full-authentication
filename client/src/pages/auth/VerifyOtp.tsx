@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { SiAuthelia } from "react-icons/si";
 import * as apiClient from "../../api-Client";
@@ -11,6 +11,7 @@ const VerifyOTP = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const userId = searchParams.get("userId");
+  const queryClient = useQueryClient();
 
   const inputRef = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -86,8 +87,9 @@ const VerifyOTP = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.verifyEmail,
-    onSuccess: () => {
+    onSuccess: async () => {
       showToast({ message: "Email Verified!", type: "SUCCESS" });
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
       navigate("/");
     },
     onError: (error) => {
