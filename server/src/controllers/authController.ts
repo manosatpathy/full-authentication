@@ -1,7 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import {
   createUserAndSendOTP,
-  findAllUsers,
   findUser,
   findUserByRefreshToken,
   rotateRefreshToken,
@@ -14,15 +13,8 @@ import {
   generateRefreshToken,
 } from "../utils/tokens";
 import { ErrorHandler } from "../utils/errorHandler";
-import { sendForgetPasswordLink } from "../services/mailServices";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
-
-import {
-  checkUsernameAvailability,
-  validateAndUpdateUsername,
-  validateCurrentPassword,
-} from "../services/profileService";
 
 export const registerController = async (
   req: Request,
@@ -142,100 +134,6 @@ export const verifyMailController = async (
   }
 };
 
-export const getAllUsers = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const users = await findAllUsers([
-      "email",
-      "username",
-      "email_verified",
-      "role",
-    ]);
-    res.status(200).json({
-      message: "Users fetched successfully",
-      data: users,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const getCurrentUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const userId = req.user?.userId;
-
-  try {
-    const user = await findUser({ id: userId }, [
-      "email",
-      "username",
-      "email_verified",
-      "role",
-    ]);
-    if (!user) {
-      throw new ErrorHandler("User with id not found", 404);
-    }
-    res.status(200).json({
-      message: "User fetched success",
-      data: user,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const forgetPasswordController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { email } = req.body;
-  try {
-    const user = await findUser({ email });
-    if (!user) {
-      throw new ErrorHandler("Email does not exist", 401);
-    }
-
-    await sendForgetPasswordLink(user);
-    res.status(201).json({
-      error: false,
-      message: "Link has been sent!",
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const resetPasswordController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { password, token } = req.body;
-
-  const decoded = generateDecodedToken(token, "reset");
-  const userId = decoded?.userId;
-
-  try {
-    const user = await findUser({ id: userId });
-    if (!user) {
-      throw new ErrorHandler("User not found", 404);
-    }
-    user.password = password;
-    await user.save();
-    res
-      .status(201)
-      .json({ error: false, message: "Password Reset Successful" });
-  } catch (error) {
-    next(error);
-  }
-};
-
 export const logoutController = async (
   req: Request,
   res: Response,
@@ -247,82 +145,6 @@ export const logoutController = async (
     }
     clearAuthCookies(res);
     res.status(200).json({ error: false, message: "Logout Successfully!" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const checkUsername = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      throw new ErrorHandler("User not found", 401);
-    }
-
-    const username = req.validatedQuery?.username;
-    const result = await checkUsernameAvailability(username, userId);
-
-    res.status(200).json({
-      available: result.available,
-      isSame: result.isSame,
-      message: result.message,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updateUsername = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const userId = req.user?.userId;
-    if (!userId) {
-      throw new ErrorHandler("User not found", 401);
-    }
-
-    const { username: newUsername } = req.body;
-    const result = await validateAndUpdateUsername(newUsername, userId);
-
-    res.status(200).json({
-      updated: result.updated,
-      available: result.available,
-      isSame: result.isSame,
-      message: result.message,
-      username: newUsername,
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const updatePassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const userId = req.user?.userId;
-    const user = await findUser({ id: userId });
-
-    if (!userId || !user) {
-      throw new ErrorHandler("User not found", 404);
-    }
-    const { currentPassword, newPassword } = req.body;
-
-    await validateCurrentPassword(currentPassword, user.password);
-    user.password = newPassword;
-    await user.save();
-
-    res.status(200).json({
-      message: "Password Changed successfully",
-    });
   } catch (error) {
     next(error);
   }

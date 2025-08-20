@@ -4,6 +4,9 @@ import mongoose from "mongoose";
 import cors from "cors";
 import "dotenv/config";
 import authRoutes from "./routes/authRoutes";
+import passwordRoutes from "./routes/passwordRoutes";
+import userRoutes from "./routes/userRoutes";
+import adminRoutes from "./routes/adminRoutes";
 import { errorHandler } from "./middlewares/errorMiddleware";
 
 const app = express();
@@ -27,6 +30,9 @@ mongoose.connect(dbUrl as string).then(() => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/password", passwordRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use(errorHandler);
 

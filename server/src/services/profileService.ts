@@ -21,7 +21,7 @@ export const checkUsernameAvailability = async (
 
   if (userExist?._id.toString() === userId) {
     return {
-      available: true,
+      available: false,
       isSame: true,
       message: "This is your current username",
     };
