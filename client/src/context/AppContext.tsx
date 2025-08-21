@@ -1,8 +1,9 @@
 import Toast from "@/components/Toast";
-import { useQuery } from "@tanstack/react-query";
-import { createContext, useContext, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createContext, useCallback, useContext, useState } from "react";
 import * as apiClient from "../api-Client";
 import { useLogout } from "@/hooks/useLogout";
+import { is401 } from "@/utils/is401";
 
 export type ToastMessage = {
   message: string;
@@ -33,47 +34,43 @@ export const AppContextProvider = ({
   children: React.ReactNode;
 }) => {
   const [toast, setToast] = useState<ToastMessage | undefined>(undefined);
-  const [user, setUser] = useState<User | null>(null);
-  const [hasTriedRefresh, setHasTriedRefresh] = useState(false);
-
-  const showToast = (toastMessage: ToastMessage) => setToast(toastMessage);
+  const showToast = useCallback(
+    (toastMessage: ToastMessage) => setToast(toastMessage),
+    []
+  );
   const logoutMutation = useLogout(showToast);
+  const qc = useQueryClient();
 
-  const { data, refetch, isError, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["me"],
-    queryFn: apiClient.getCurrentUser,
+    queryFn: async () => {
+      try {
+        return await apiClient.getCurrentUser();
+      } catch (err) {
+        if (!is401(err)) throw err;
+        try {
+          await apiClient.refreshToken();
+          return await apiClient.getCurrentUser();
+        } catch (refreshErr) {
+          await logoutMutation.mutateAsync();
+          qc.setQueryData(["me"], { user: null });
+          throw refreshErr;
+        }
+      }
+    },
+    retry: false,
   });
 
-  useEffect(() => {
-    const handleRefresh = async () => {
-      try {
-        await apiClient.refreshToken();
-        setHasTriedRefresh(false);
-        refetch();
-      } catch (refreshError) {
-        console.error("Refresh token failed:", refreshError);
-        logoutMutation.mutate();
-      }
-    };
+  const logout = useCallback(() => {
+    logoutMutation.mutate(undefined, {
+      onSuccess: () => {
+        qc.setQueryData(["me"], { user: null });
+      },
+    });
+  }, [logoutMutation, qc]);
 
-    if (isError && !hasTriedRefresh) {
-      setHasTriedRefresh(true);
-      handleRefresh();
-    }
-  }, [isError, hasTriedRefresh, refetch, logoutMutation]);
-
-  useEffect(() => {
-    if (data) {
-      setUser(data.user);
-      setHasTriedRefresh(false);
-    }
-  }, [data]);
-
-  const logout = () => {
-    logoutMutation.mutate();
-  };
-
-  const isAuthenticated = !isLoading && !isError && !!data.user;
+  const user = data?.user ?? null;
+  const isAuthenticated = !!user;
 
   return (
     <AppContext.Provider
