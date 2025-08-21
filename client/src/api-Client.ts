@@ -34,7 +34,7 @@ export const login = async (formData: LoginFormType) => {
 
 export const getCurrentUser = async () => {
   try {
-    const response = await axiosInstance.get("/auth/me");
+    const response = await axiosInstance.get("/users/me");
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -48,7 +48,7 @@ export const getCurrentUser = async () => {
 
 export const getAllUsers = async () => {
   try {
-    const response = await axiosInstance.get("/auth/users");
+    const response = await axiosInstance.get("/admin/users");
     return response.data.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -116,7 +116,7 @@ export const verifyEmail = async ({
 
 export const sendForgetPasswordLink = async (email: string) => {
   try {
-    const response = await axiosInstance.post("/auth/forget-password", {
+    const response = await axiosInstance.post("/password/forget", {
       email,
     });
     return response.data;
@@ -137,10 +137,7 @@ export const resetPassword = async (resetData: {
   token: string;
 }) => {
   try {
-    const response = await axiosInstance.post(
-      "/auth/reset-password",
-      resetData
-    );
+    const response = await axiosInstance.post("/password/reset", resetData);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -155,7 +152,7 @@ export const resetPassword = async (resetData: {
 export const checkUsername = async (username: string) => {
   try {
     const response = await axiosInstance.get(
-      `/auth/check-username?newUsername=${username}`
+      `/users/check-username?newUsername=${username}`
     );
     return response.data;
   } catch (error) {
@@ -172,7 +169,7 @@ export const checkUsername = async (username: string) => {
 export const updateUsername = async (payload: UsernameType) => {
   try {
     const { username } = payload;
-    const response = await axiosInstance.post(`/auth/update-username`, {
+    const response = await axiosInstance.patch(`/users/username`, {
       newUsername: username,
     });
     return response.data;
@@ -189,8 +186,8 @@ export const updateUsername = async (payload: UsernameType) => {
 
 export const updatePassword = async (updateFields: UpdatePasswordType) => {
   try {
-    const response = await axiosInstance.post(
-      "/auth/update-password",
+    const response = await axiosInstance.patch(
+      "/password/update",
       updateFields
     );
     return response.data;
