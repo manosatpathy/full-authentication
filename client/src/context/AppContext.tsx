@@ -21,6 +21,7 @@ type AppContext = {
   showToast: (toastMessage: ToastMessage) => void;
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   logout: () => void;
 };
 
@@ -38,17 +39,14 @@ export const AppContextProvider = ({
   const showToast = (toastMessage: ToastMessage) => setToast(toastMessage);
   const logoutMutation = useLogout(showToast);
 
-  const { data, refetch, isError } = useQuery({
+  const { data, refetch, isError, isLoading } = useQuery({
     queryKey: ["me"],
     queryFn: apiClient.getCurrentUser,
   });
 
-  const hasRefreshToken = document.cookie.includes("refreshToken");
-
   useEffect(() => {
     const handleRefresh = async () => {
       try {
-        if (!hasRefreshToken) return;
         await apiClient.refreshToken();
         setHasTriedRefresh(false);
         refetch();
@@ -62,11 +60,11 @@ export const AppContextProvider = ({
       setHasTriedRefresh(true);
       handleRefresh();
     }
-  }, [isError, hasTriedRefresh, refetch, logoutMutation, hasRefreshToken]);
+  }, [isError, hasTriedRefresh, refetch, logoutMutation]);
 
   useEffect(() => {
     if (data) {
-      setUser(data.data);
+      setUser(data.user);
       setHasTriedRefresh(false);
     }
   }, [data]);
@@ -75,12 +73,15 @@ export const AppContextProvider = ({
     logoutMutation.mutate();
   };
 
+  const isAuthenticated = !isLoading && !isError && !!data.user;
+
   return (
     <AppContext.Provider
       value={{
         showToast,
         user,
-        isAuthenticated: !isError && !!user,
+        isAuthenticated,
+        isLoading,
         logout,
       }}
     >
