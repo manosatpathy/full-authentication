@@ -12,7 +12,7 @@ import * as apiClient from "../../api-Client";
 const Login = () => {
   const navigate = useNavigate();
   const { showToast } = useAppContext();
-  const quartClient = useQueryClient();
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -26,7 +26,7 @@ const Login = () => {
     mutationFn: apiClient.login,
     onSuccess: async () => {
       showToast({ message: "Login Successful!", type: "SUCCESS" });
-      await quartClient.invalidateQueries({ queryKey: ["me"] });
+      await queryClient.invalidateQueries({ queryKey: ["me"] });
       navigate("/");
     },
     onError: (error) => {
