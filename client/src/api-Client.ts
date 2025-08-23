@@ -200,3 +200,26 @@ export const updatePassword = async (updateFields: UpdatePasswordType) => {
     throw new Error("An unexpected error occurred");
   }
 };
+
+export const updateUserRole = async ({
+  userId,
+  role,
+}: {
+  userId: string;
+  role: string;
+}) => {
+  try {
+    const response = await axiosInstance.patch(
+      `/admin/users/${userId}/role`,
+      role
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.log(error);
+      const message = error.response?.data?.message || "Error updating profile";
+      throw new Error(message);
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
