@@ -2,7 +2,15 @@ import { z } from "zod";
 
 export const registrationSchema = z
   .object({
-    username: z.string().nonempty("Username is required"),
+    username: z
+      .string()
+      .min(6, "Username must be at least 6 characters long")
+      .regex(
+        /^[a-zA-Z0-9_]+$/,
+        "Username can only contain letters, numbers, and underscores"
+      )
+      .toLowerCase()
+      .trim(),
     email: z.string().email(),
     password: z
       .string()
