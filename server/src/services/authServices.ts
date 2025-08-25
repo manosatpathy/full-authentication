@@ -111,3 +111,25 @@ export const rotateRefreshToken = (
   user.refreshTokens.pull({ token: oldToken });
   user.refreshTokens.push({ token: newToken, expiresAt: expiry });
 };
+
+export const sendVerificationOTP = async (userId: string) => {
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new ErrorHandler("User not found", 404);
+  }
+  if (user.email_verified) {
+    throw new ErrorHandler("Email already verified", 400);
+  }
+
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 1000 * 60 * 10);
+
+  user.otp = otp;
+  user.otpExpires = otpExpires;
+
+  await user.save();
+
+  await sendVerificationMail(user.toObject(), otp);
+
+  return "Verification email sent successfully";
+};

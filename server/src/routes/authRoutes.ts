@@ -4,6 +4,7 @@ import {
   logoutController,
   refreshTokenController,
   registerController,
+  resendVerificationController,
   verifyMailController,
 } from "../controllers/authController";
 import { validateRequest } from "../middlewares/validationMiddleware";
@@ -32,6 +33,11 @@ router.post(
   "/verify-mail",
   validateRequest(verifyMailSchema),
   verifyMailController
+);
+router.post(
+  "/resend-verification",
+  verifyToken("access"),
+  resendVerificationController
 );
 
 export default router;

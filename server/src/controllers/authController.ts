@@ -4,6 +4,7 @@ import {
   findUser,
   findUserByRefreshToken,
   rotateRefreshToken,
+  sendVerificationOTP,
   verifyUserEmail,
 } from "../services/authServices";
 import bcrypt from "bcrypt";
@@ -147,5 +148,24 @@ export const logoutController = async (
     res.status(200).json({ error: false, message: "Logout Successfully!" });
   } catch (error) {
     next(error);
+  }
+};
+
+export const resendVerificationController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.userId;
+
+    const message = await sendVerificationOTP(userId!);
+
+    res.status(200).json({
+      error: false,
+      message,
+    });
+  } catch (err) {
+    next(err);
   }
 };
