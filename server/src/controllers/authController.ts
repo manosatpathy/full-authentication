@@ -159,11 +159,12 @@ export const resendVerificationController = async (
   try {
     const userId = req.user?.userId;
 
-    const message = await sendVerificationOTP(userId!);
+    const data = await sendVerificationOTP(userId!);
 
     res.status(200).json({
       error: false,
-      message,
+      message: data.message,
+      otpExpiry: data.otpExpiry,
     });
   } catch (err) {
     next(err);
