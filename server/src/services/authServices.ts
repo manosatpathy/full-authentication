@@ -1,4 +1,5 @@
-import User from "../models/userModel";
+import { Types } from "mongoose";
+import User, { UserType } from "../models/userModel";
 import { FindUserType, UserInput } from "../types/userTypes";
 import { ErrorHandler } from "../utils/errorHandler";
 import generateOTP from "../utils/generateOTP";
@@ -36,6 +37,17 @@ export const findAllUsers = async (selectedFields?: string[]) => {
   return await query;
 };
 
+const setOTPAndSendMail = async (user: UserType & { _id: Types.ObjectId }) => {
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 1000 * 60 * 10);
+
+  user.otp = otp;
+  user.otpExpires = otpExpires;
+
+  await sendVerificationMail(user, otp);
+  return user;
+};
+
 export const createUserAndSendOTP = async ({
   username,
   password,
@@ -45,18 +57,8 @@ export const createUserAndSendOTP = async ({
   let user = await findUser({ email, username });
   if (user) throw new ErrorHandler("User already exists", 400);
 
-  const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 1000 * 60 * 10);
-  const newUser = new User({
-    username,
-    password,
-    email,
-    otp,
-    otpExpires,
-    role,
-  });
-
-  await sendVerificationMail(newUser.toObject(), otp);
+  const newUser = new User({ username, password, email, role });
+  await setOTPAndSendMail(newUser.toObject());
   const savedUser = await newUser.save();
 
   return savedUser;
@@ -121,15 +123,11 @@ export const sendVerificationOTP = async (userId: string) => {
     throw new ErrorHandler("Email already verified", 400);
   }
 
-  const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 1000 * 60 * 10);
-
-  user.otp = otp;
-  user.otpExpires = otpExpires;
-
+  await setOTPAndSendMail(user);
   await user.save();
 
-  await sendVerificationMail(user.toObject(), otp);
-
-  return "Verification email sent successfully";
+  return {
+    message: "Verification email sent successfully",
+    otpExpiry: user.otpExpires,
+  };
 };

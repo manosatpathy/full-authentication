@@ -1,8 +1,16 @@
-import { UserPayload } from "../types/userTypes";
+import { Types } from "mongoose";
 import { transporter } from "../utils/mailHandler";
 import { generateResetPasswordToken } from "../utils/tokens";
 
-export const sendVerificationMail = async (user: UserPayload, otp: string) => {
+export interface MailUserPayload {
+  _id: Types.ObjectId;
+  email: string;
+}
+
+export const sendVerificationMail = async (
+  user: MailUserPayload,
+  otp: string
+) => {
   const verificationLink = `http://localhost:5173/auth/verify-otp?userId=${user._id}`;
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -13,7 +21,7 @@ export const sendVerificationMail = async (user: UserPayload, otp: string) => {
   await transporter.sendMail(mailOptions);
 };
 
-export const sendForgetPasswordLink = async (user: UserPayload) => {
+export const sendForgetPasswordLink = async (user: MailUserPayload) => {
   const token = generateResetPasswordToken(user._id, user.email);
   const resetPasswordLink = `http://localhost:5173/auth/reset-password?token=${token}`;
   const mailOptions = {

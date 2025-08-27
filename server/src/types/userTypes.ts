@@ -1,15 +1,4 @@
-import { Types } from "mongoose";
 import { UserType } from "./../models/userModel";
-
-export interface UserPayload {
-  _id: Types.ObjectId;
-  username: string;
-  password: string;
-  email: string;
-  email_verified: boolean;
-  refreshToken?: string | null | undefined;
-  otp?: string | null | undefined;
-}
 
 export type Role = "user" | "admin";
 
