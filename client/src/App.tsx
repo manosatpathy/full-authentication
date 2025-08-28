@@ -10,7 +10,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import VerifyOTP from "./pages/auth/VerifyOtp";
 import PageNotFound from "./pages/PageNotFound";
 import Profile from "./pages/Profile";
-import AdminDashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/admin/Dashboard";
 import AuthenticatedRoute from "./utils/protectedRoutes/AuthenticatedRoute";
 import TokenProtectedRoute from "./utils/protectedRoutes/TokenProtectedRoute";
 import UserIdProtectedRoute from "./utils/protectedRoutes/UserIdProtectedRoute";
@@ -19,33 +19,13 @@ function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: (
-        <>
-          <MainLayout />
-        </>
-      ),
+      element: <MainLayout />,
       children: [
         {
           path: "/",
           element: <Home />,
         },
-        {
-          element: <AuthenticatedRoute />,
-          children: [
-            {
-              path: "admin",
-              element: <AdminDashboard />,
-            },
-            {
-              path: "user-profile",
-              element: <Profile />,
-            },
-            {
-              path: "admin-profile",
-              element: <Profile />,
-            },
-          ],
-        },
+
         {
           path: "/auth",
           element: <AuthLayout />,
@@ -84,12 +64,31 @@ function App() {
         },
 
         {
+          element: <AuthenticatedRoute />,
+          children: [
+            {
+              path: "admin",
+              element: <AdminDashboard />,
+            },
+            {
+              path: "user-profile",
+              element: <Profile />,
+            },
+            {
+              path: "admin-profile",
+              element: <Profile />,
+            },
+          ],
+        },
+
+        {
           path: "*",
           element: <PageNotFound />,
         },
       ],
     },
   ]);
+
   return <RouterProvider router={router} />;
 }
 
