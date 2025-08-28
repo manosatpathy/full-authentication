@@ -116,5 +116,6 @@
   }
   body {
     @apply bg-background text-foreground;
+    @apply bg-gradient-to-br from-[#1b5048] to-[#2a4a60] text-slate-200;
   }
 }
