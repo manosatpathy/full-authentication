@@ -70,10 +70,10 @@ const PasswordStrength = ({ password }: PasswordStrengthProps) => {
   const barColors = getBarColors(strengthInfo.level);
 
   return (
-    <div className="space-y-4 p-6 bg-white">
+    <div className="space-y-4 p-6">
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-gray-900">Password Strength</h3>
+          <h3 className="font-semibold text-gray-200">Password Strength</h3>
           <span
             className={`text-sm font-medium ${
               strengthInfo.color === "red"
@@ -86,7 +86,7 @@ const PasswordStrength = ({ password }: PasswordStrengthProps) => {
                 ? "text-blue-600"
                 : strengthInfo.color === "green"
                 ? "text-green-600"
-                : "text-gray-500"
+                : "text-gray-400"
             }`}
           >
             {strengthInfo.text}
@@ -104,7 +104,7 @@ const PasswordStrength = ({ password }: PasswordStrengthProps) => {
       </div>
 
       <div className="space-y-3">
-        <p className="text-sm text-gray-600 font-medium">
+        <p className="text-sm text-gray-300 font-medium">
           {hasMinLength
             ? "Great! Now make it stronger:"
             : "Must have at least 8 characters"}
@@ -115,7 +115,7 @@ const PasswordStrength = ({ password }: PasswordStrengthProps) => {
             <li
               key={index}
               className={`flex items-center space-x-3 text-sm transition-all duration-200 ${
-                rule.isValid ? "text-green-700" : "text-gray-500"
+                rule.isValid ? "text-green-500" : "text-gray-400"
               }`}
             >
               <div

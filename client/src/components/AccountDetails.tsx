@@ -9,7 +9,7 @@ const AccountDetails = () => {
   const { user, showToast } = useAppContext();
 
   return (
-    <Card className="w-full mx-auto rounded-2xl shadow-2xl border-none bg-gradient-to-br from-white via-gray-50 to-blue-100 px-0">
+    <Card className="w-full h-full mx-auto min-h-[510px] border-none rounded-2xl shadow-2xl bg-gradient-to-br from-white via-gray-50 to-blue-100 px-0">
       <CardHeader className="flex flex-row justify-between items-center px-8 py-6 border-b border-blue-100">
         <CardTitle className="text-2xl font-bold text-gray-900">
           Account Details

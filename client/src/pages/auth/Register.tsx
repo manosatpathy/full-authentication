@@ -103,7 +103,7 @@ const Register = () => {
           <Button
             type="submit"
             disabled={isPending}
-            className={`w-full cursor-pointer ${
+            className={`w-full cursor-pointer bg-white text-black hover:bg-blue-200 ${
               isPending ? "disabled:bg-slate-950" : ""
             }`}
           >

@@ -43,7 +43,7 @@ const Header = () => {
       </Link>
       {isAuthenticated ? (
         <div className="flex gap-3 items-center">
-          <span className="font-medium text-gray-700">
+          <span className="font-medium text-blue-100">
             Welcome, {user?.username}!
           </span>
           <div onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
@@ -86,7 +86,9 @@ const Header = () => {
         </div>
       ) : (
         <Link to={"/auth/login"}>
-          <Button>Log In </Button>
+          <Button className="bg-white text-black hover:bg-blue-200 cursor-pointer">
+            Log In{" "}
+          </Button>
         </Link>
       )}
     </div>

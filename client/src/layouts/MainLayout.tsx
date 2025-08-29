@@ -4,7 +4,7 @@ const MainLayout = () => {
   return (
     <div className="container mx-auto px-7">
       <Header />
-      <div className="pt-16">
+      <div className="pt-16 min-h-[calc(100vh-67px)]">
         <Outlet />
       </div>
     </div>

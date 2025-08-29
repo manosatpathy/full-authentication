@@ -39,7 +39,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex  flex-col items-center gap-4">
+    <div className="flex  flex-col items-center gap-4 min-h-[90vh] container mx-auto">
       <SiAuthelia className="text-5xl" />
       <h1 className="text-2xl font-bold mb-10">Login</h1>
       <form onSubmit={handleSubmit(onSubmit)}>
@@ -88,8 +88,8 @@ const Login = () => {
           <Button
             type="submit"
             disabled={isPending}
-            className={`w-full cursor-pointer ${
-              isPending ? "disabled:bg-slate-950" : ""
+            className={`w-full cursor-pointer bg-white text-black hover:bg-blue-200 ${
+              isPending ? "disabled:bg-slate-600" : ""
             }`}
           >
             Submit
