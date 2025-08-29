@@ -15,7 +15,10 @@ const ForgetPassword = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.sendForgetPasswordLink,
     onSuccess: () => {
-      showToast({ message: "OTP sent!", type: "SUCCESS" });
+      showToast({
+        message: "Password reset link sent to your email.",
+        type: "SUCCESS",
+      });
       navigate("/auth/reset-password");
     },
     onError: (error) => {

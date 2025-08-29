@@ -30,7 +30,10 @@ const ResetPassword = () => {
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.resetPassword,
     onSuccess: () => {
-      showToast({ message: "Register Success!", type: "SUCCESS" });
+      showToast({
+        message: "Password changed!",
+        type: "SUCCESS",
+      });
       navigate("/auth/login");
     },
     onError: (error) => {
