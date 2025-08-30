@@ -1,4 +1,5 @@
 import { useAppContext } from "@/context/AppContext";
+import { Link } from "react-router-dom";
 
 const Home = () => {
   const { isAuthenticated, user } = useAppContext();
@@ -23,18 +24,18 @@ const Home = () => {
           </h2>
         ) : (
           <div className="flex gap-4">
-            <a
-              href="/auth/login"
+            <Link
+              to={"/auth/login"}
               className="px-6 py-2 rounded bg-white text-blue-700 font-semibold shadow hover:bg-blue-50 transition"
             >
               Login
-            </a>
-            <a
-              href="/auth/register"
+            </Link>
+            <Link
+              to="/auth/register"
               className="px-6 py-2 rounded bg-blue-800 font-semibold shadow hover:bg-blue-900 transition"
             >
               Sign Up
-            </a>
+            </Link>
           </div>
         )}
       </div>
