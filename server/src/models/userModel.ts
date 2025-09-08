@@ -1,43 +1,48 @@
 import mongoose, { InferSchemaType, Schema } from "mongoose";
 import bcrypt from "bcrypt";
 
-const userSchema = new Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    match: /^[a-zA-Z0-9]+$/,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
-  },
-  refreshTokens: [
-    {
-      token: String,
-      expiresAt: Date,
+const userSchema = new Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      match: /^[a-zA-Z0-9]+$/,
     },
-  ],
-  otp: {
-    type: String,
-    max: 6,
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    refreshTokens: [
+      {
+        token: String,
+        expiresAt: Date,
+      },
+    ],
+    otp: {
+      type: String,
+      max: 6,
+    },
+    otpExpires: { type: Date },
+    email_verified: {
+      type: Boolean,
+      default: false,
+    },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
-  otpExpires: { type: Date },
-  email_verified: {
-    type: Boolean,
-    default: false,
-  },
-  role: {
-    type: String,
-    enum: ["user", "admin"],
-    default: "user",
-  },
-});
+  {
+    timestamps: true,
+  }
+);
 
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
