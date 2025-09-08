@@ -1,13 +1,13 @@
+import "dotenv/config";
 import express, { Request, Response } from "express";
 import cookieParser from "cookie-parser";
-import mongoose from "mongoose";
 import cors from "cors";
-import "dotenv/config";
 import authRoutes from "./routes/authRoutes";
 import passwordRoutes from "./routes/passwordRoutes";
 import userRoutes from "./routes/userRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import { errorHandler } from "./middlewares/errorMiddleware";
+import connectDb from "./config/db";
 
 const app = express();
 app.use(express.json());
@@ -24,11 +24,6 @@ app.get("/", (req: Request, res: Response) => {
   res.send("all working");
 });
 
-const dbUrl = process.env.MONGODB_CONNECTION_STRING;
-mongoose.connect(dbUrl as string).then(() => {
-  console.log("database connected successfully");
-});
-
 app.use("/api/auth", authRoutes);
 app.use("/api/password", passwordRoutes);
 app.use("/api/users", userRoutes);
@@ -36,6 +31,15 @@ app.use("/api/admin", adminRoutes);
 
 app.use(errorHandler);
 
-app.listen(8080, () => {
-  console.log("server is running on port 8080");
-});
+const PORT = process.env.PORT || 5000;
+
+connectDb()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((error) => {
+    console.error("Failed to connect DB:", error.message);
+    process.exit(1);
+  });
