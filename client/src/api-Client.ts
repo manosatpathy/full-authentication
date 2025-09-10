@@ -39,8 +39,7 @@ export const getCurrentUser = async () => {
   } catch (error) {
     if (axios.isAxiosError(error)) {
       console.log(error);
-      const message = error.response?.data?.message || "Failed to fetch user";
-      throw new Error(message);
+      throw error;
     }
     throw new Error("An unexpected error occurred");
   }
