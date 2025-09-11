@@ -16,6 +16,7 @@ import {
 import { ErrorHandler } from "../utils/errorHandler";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
+import User from "../models/userModel";
 
 export const registerController = async (
   req: Request,
@@ -140,10 +141,15 @@ export const logoutController = async (
   res: Response,
   next: NextFunction
 ) => {
+  const refreshToken = req.cookies.refreshToken;
+  const userId = req.user?.userId;
   try {
-    if (!req.user?.userId) {
+    if (!userId) {
       throw new ErrorHandler("User not found", 404);
     }
+    await User.findByIdAndDelete(userId, {
+      $pull: { refreshTokens: { token: refreshToken } },
+    });
     clearAuthCookies(res);
     res.status(200).json({ error: false, message: "Logout Successfully!" });
   } catch (error) {
