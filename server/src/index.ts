@@ -8,6 +8,7 @@ import userRoutes from "./routes/userRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import { errorHandler } from "./middlewares/errorMiddleware";
 import connectDb from "./config/db";
+import "./config/redis";
 
 const app = express();
 app.use(express.json());
