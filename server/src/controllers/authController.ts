@@ -1,9 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import {
-  createUserAndSendOTP,
   findUser,
   findUserByRefreshToken,
   rotateRefreshToken,
+  sendSignupVerification,
   sendVerificationOTP,
   verifyUserEmail,
 } from "../services/authServices";
@@ -17,30 +17,29 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
 import User from "../models/userModel";
+import { redisClient } from "./../config/redis";
 
 export const registerController = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  const { username, password, email, role } = req.body;
+  const { username, password, email } = req.body;
   try {
-    const savedUser = await createUserAndSendOTP({
+    const rateLimitKey = `register-rate-limit:${req.ip}:${email}`;
+    if (await redisClient.get(rateLimitKey)) {
+      throw new ErrorHandler("Too many request, try again later.", 429);
+    }
+    await sendSignupVerification({
       username,
-      password,
       email,
-      role,
+      password,
     });
-    res.status(201).json({
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+    res.status(200).json({
       error: false,
-      message: "User registered",
-      user: {
-        id: savedUser._id,
-        username: savedUser.username,
-        email: savedUser.email,
-        role: savedUser.role,
-        verified: savedUser.email_verified,
-      },
+      message:
+        "A verification link has been sent to your Email. It will expire in 5 minutes.",
     });
   } catch (err) {
     next(err);

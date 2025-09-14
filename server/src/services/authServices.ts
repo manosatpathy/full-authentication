@@ -5,6 +5,8 @@ import { ErrorHandler } from "../utils/errorHandler";
 import generateOTP from "../utils/generateOTP";
 import { sendVerificationMail } from "./mailServices";
 import bcrypt from "bcrypt";
+import { generateRandomToken } from "../utils/tokens";
+import { redisClient } from "../config/redis";
 
 export const findUser = async (
   { id, email, username }: FindUserType,
@@ -48,20 +50,22 @@ const setOTPAndSendMail = async (user: UserType & { _id: Types.ObjectId }) => {
   return user;
 };
 
-export const createUserAndSendOTP = async ({
+export const sendSignupVerification = async ({
   username,
-  password,
   email,
-  role,
+  password,
 }: UserInput) => {
   let user = await findUser({ email, username });
   if (user) throw new ErrorHandler("User already exists", 400);
 
-  const newUser = new User({ username, password, email, role });
-  await setOTPAndSendMail(newUser.toObject());
-  const savedUser = await newUser.save();
+  const token = generateRandomToken();
+  const verifyKey = `verify:${token}`;
+  const dataToStore = JSON.stringify({ username, email, password });
 
-  return savedUser;
+  await redisClient.set(verifyKey, dataToStore, { EX: 300 });
+
+  await sendVerificationMail(email, token);
+  return { token, success: true };
 };
 
 export const verifyUserEmail = async (otp: string, userId: string) => {

@@ -19,11 +19,6 @@ export const registrationSchema = z
         /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]/,
         "Password must contain at least one letter and one number"
       ),
-    role: z
-      .string()
-      .transform((value) => value.toLowerCase())
-      .pipe(z.enum(["user", "admin"]))
-      .optional(),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {

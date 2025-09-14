@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { Types } from "mongoose";
 import { DecodedToken } from "../types/tokenTypes";
 import { ErrorHandler } from "./errorHandler";
+import crypto from "crypto";
 
 export const generateAccessToken = (
   userId: Types.ObjectId,
@@ -65,4 +66,8 @@ export const generateDecodedToken = (
   } catch (err: any) {
     throw new ErrorHandler(`Invalid or expired ${type} token`, 401);
   }
+};
+
+export const generateRandomToken = () => {
+  return crypto.randomBytes(32).toString("hex");
 };

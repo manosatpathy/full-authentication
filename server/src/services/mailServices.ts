@@ -2,21 +2,17 @@ import { Types } from "mongoose";
 import { transporter } from "../utils/mailHandler";
 import { generateResetPasswordToken } from "../utils/tokens";
 
-export interface MailUserPayload {
-  _id: Types.ObjectId;
-  email: string;
-}
-
-export const sendVerificationMail = async (
-  user: MailUserPayload,
-  otp: string
-) => {
-  const verificationLink = `http://localhost:5173/auth/verify-otp?userId=${user._id}`;
+export const sendVerificationMail = async (email: string, token: string) => {
+  const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const verificationLink = `${baseUrl.replace(
+    /\/+$/,
+    ""
+  )}/token/${encodeURIComponent(token)}`;
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: user?.email,
-    subject: "Welcome to the Authentication Project",
-    html: `<p>Welcome to the Authentication Project, Your account has been created with email id: ${user?.email}</p><b>Please verify the email using the OTP ${otp} by clicking this </b><a href="${verificationLink}">Verify</a>`,
+    to: email,
+    subject: "Verify your email for Account creation",
+    html: `<p>Welcome to the Authentication Project, To create the account with this email id: ${email}</p><b>Please verify the email by clicking this </b><a href="${verificationLink}">Verify</a>`,
   };
   await transporter.sendMail(mailOptions);
 };
