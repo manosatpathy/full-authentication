@@ -17,6 +17,22 @@ export const sendVerificationMail = async (email: string, token: string) => {
   await transporter.sendMail(mailOptions);
 };
 
+export const sendVerificationOtp = async (email: string, otp: string) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: "OTP for Login verification",
+    html: `
+      <p>Welcome to the Authentication Project!</p>
+      <p>Your OTP for login verification is:</p>
+      <h2 style="color: #007bff; font-size: 24px; letter-spacing: 2px;">${otp}</h2>
+      <p><b>This OTP will expire in 5 minutes.</b></p>
+      <p>If you didn't request this, please ignore this email.</p>
+    `,
+  };
+  await transporter.sendMail(mailOptions);
+};
+
 export const sendForgetPasswordLink = async (user: MailUserPayload) => {
   const token = generateResetPasswordToken(user._id, user.email);
   const resetPasswordLink = `http://localhost:5173/auth/reset-password?token=${token}`;

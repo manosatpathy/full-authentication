@@ -3,6 +3,7 @@ import {
   findUser,
   findUserByRefreshToken,
   rotateRefreshToken,
+  sendLoginVerification,
   sendSignupVerification,
   sendVerificationOTP,
   verifyUserEmail,
@@ -46,6 +47,24 @@ export const registerController = async (
   }
 };
 
+export const verifyUserController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const { token } = req.body;
+  try {
+    if (!token) {
+      throw new ErrorHandler("verification token is required", 400);
+    }
+
+    await verifyUserEmail(token);
+    res.status(201).json({ message: "User Registered successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const loginController = async (
   req: Request,
   res: Response,
@@ -57,31 +76,65 @@ export const loginController = async (
     if (!user) {
       throw new ErrorHandler("Username or Email does not exist", 401);
     }
+    const rateLimitKey = `login-rate-limit:${req.ip}:${user.email}`;
+    if (await redisClient.get(rateLimitKey)) {
+      throw new ErrorHandler("Too many request", 429);
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       throw new ErrorHandler("Invalid Credentials", 401);
     }
 
-    const accessToken = generateAccessToken(user._id, user.email, user.role);
-    const { token: refreshToken, expiry } = generateRefreshToken(
-      user._id.toString()
-    );
+    await sendLoginVerification(user.email);
 
-    user.refreshTokens.push({ token: refreshToken, expiresAt: expiry });
-    await user.save();
+    await redisClient.set(rateLimitKey, "true", { EX: 60 });
+
+    res.status(200).json({
+      error: false,
+      message: "Verification OTP has been sent. It will be valid for 5 min",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const verifyOtp = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { identifier, otp } = req.body;
+    let user = await findUser({ email: identifier, username: identifier });
+    if (!user) {
+      throw new ErrorHandler("User not found", 404);
+    }
+
+    const otpKey = `otp:${user?.email}`;
+    const storedOtp = await redisClient.get(otpKey);
+
+    if (!storedOtp) {
+      throw new ErrorHandler("OTP expired", 400);
+    }
+
+    if (otp !== storedOtp) {
+      throw new ErrorHandler("Invalid OTP", 400);
+    }
+
+    await redisClient.del(otpKey);
+
+    const accessToken = generateAccessToken(user?._id.toString());
+    const refreshToken = generateRefreshToken(user?._id.toString());
+
+    const refreshKey = `refreshKey:${user?._id}`;
+    await redisClient.set(refreshKey, refreshToken, { EX: 7 * 24 * 60 * 60 });
 
     setAuthCookies(res, accessToken, refreshToken);
 
     res.status(200).json({
-      error: false,
-      message: "Login successful",
-      accessToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        role: user.role,
-      },
+      message: `Welcome ${user?.username}`,
+      user,
     });
   } catch (error) {
     next(error);
@@ -115,21 +168,6 @@ export const refreshTokenController = async (
     setAuthCookies(res, accessToken, newRefreshToken);
 
     res.status(200).json({ accessToken, message: "Token rotated" });
-  } catch (error) {
-    next(error);
-  }
-};
-
-export const verifyMailController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const { otp, userId } = req.body;
-
-  try {
-    await verifyUserEmail(otp, userId);
-    res.status(200).json({ message: "Email verified successfully" });
   } catch (error) {
     next(error);
   }

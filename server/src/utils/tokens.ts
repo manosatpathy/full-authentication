@@ -4,27 +4,16 @@ import { DecodedToken } from "../types/tokenTypes";
 import { ErrorHandler } from "./errorHandler";
 import crypto from "crypto";
 
-export const generateAccessToken = (
-  userId: Types.ObjectId,
-  email: string,
-  role: string
-) => {
-  return jwt.sign({ userId, email, role }, process.env.ACCESS_TOKEN_SECRET!, {
+export const generateAccessToken = (userId: string) => {
+  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET!, {
     expiresIn: "15m",
   });
 };
 
 export const generateRefreshToken = (userId: string) => {
-  const token = jwt.sign(
-    { userId },
-    process.env.REFRESH_TOKEN_SECRET as string,
-    {
-      expiresIn: "7d",
-    }
-  );
-
-  const expiry = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  return { token, expiry };
+  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET as string, {
+    expiresIn: "7d",
+  });
 };
 
 export const generateResetPasswordToken = (

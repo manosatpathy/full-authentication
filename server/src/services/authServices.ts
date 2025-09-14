@@ -3,7 +3,7 @@ import User, { UserType } from "../models/userModel";
 import { FindUserType, UserInput } from "../types/userTypes";
 import { ErrorHandler } from "../utils/errorHandler";
 import generateOTP from "../utils/generateOTP";
-import { sendVerificationMail } from "./mailServices";
+import { sendVerificationMail, sendVerificationOtp } from "./mailServices";
 import bcrypt from "bcrypt";
 import { generateRandomToken } from "../utils/tokens";
 import { redisClient } from "../config/redis";
@@ -39,17 +39,6 @@ export const findAllUsers = async (selectedFields?: string[]) => {
   return await query;
 };
 
-const setOTPAndSendMail = async (user: UserType & { _id: Types.ObjectId }) => {
-  const otp = generateOTP();
-  const otpExpires = new Date(Date.now() + 1000 * 60 * 10);
-
-  user.otp = otp;
-  user.otpExpires = otpExpires;
-
-  await sendVerificationMail(user, otp);
-  return user;
-};
-
 export const sendSignupVerification = async ({
   username,
   email,
@@ -68,27 +57,33 @@ export const sendSignupVerification = async ({
   return { token, success: true };
 };
 
-export const verifyUserEmail = async (otp: string, userId: string) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ErrorHandler("User not found", 404);
+export const verifyUserEmail = async (token: string) => {
+  const verifyKey = `verify:${token}`;
+
+  const userData = await redisClient.get(verifyKey);
+  if (!userData) {
+    throw new ErrorHandler("Verification Link is expired", 400);
   }
 
-  if (!user.otp || !user.otpExpires || user.otpExpires.getTime() < Date.now()) {
-    throw new ErrorHandler("OTP has expired or is invalid", 400);
-  }
+  await redisClient.del(verifyKey);
 
-  const isMatch = await bcrypt.compare(otp, user.otp as string);
-  if (!isMatch) {
-    throw new ErrorHandler("OTP does not match", 401);
-  }
+  const userDataJson = JSON.parse(userData);
 
-  user.email_verified = true;
-  user.otp = undefined;
-  user.otpExpires = undefined;
-  await user.save();
+  const newUser = new User({
+    username: userDataJson.username,
+    email: userDataJson.email,
+    password: userDataJson.password,
+  });
+  await newUser.save();
+};
 
-  return;
+export const sendLoginVerification = async (email: string) => {
+  const otp = generateOTP();
+  const otpKey = `otp:${email}`;
+
+  await redisClient.set(otpKey, otp, { EX: 300 });
+
+  await sendVerificationOtp(email, otp);
 };
 
 export const findUserByRefreshToken = async (
