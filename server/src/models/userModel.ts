@@ -18,21 +18,6 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    refreshTokens: [
-      {
-        token: String,
-        expiresAt: Date,
-      },
-    ],
-    otp: {
-      type: String,
-      max: 6,
-    },
-    otpExpires: { type: Date },
-    email_verified: {
-      type: Boolean,
-      default: false,
-    },
     role: {
       type: String,
       enum: ["user", "admin"],
@@ -47,9 +32,6 @@ const userSchema = new Schema(
 userSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
     this.password = await bcrypt.hash(this.password, 8);
-  }
-  if (this.isModified("otp") && this.otp) {
-    this.otp = await bcrypt.hash(this.otp, 8);
   }
   next();
 });
