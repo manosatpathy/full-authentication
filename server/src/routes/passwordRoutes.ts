@@ -5,7 +5,7 @@ import {
   updatePassword,
 } from "../controllers/passwordController";
 import { resetPasswordSchema } from "../validators/resetPasswordSchema";
-import { verifyToken } from "../middlewares/authMiddleware";
+import { authenticateRequest } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validationMiddleware";
 import { updatePasswordSchema } from "../validators/updatePasswordSchema";
 
@@ -19,7 +19,7 @@ router.post(
 );
 router.patch(
   "/update",
-  verifyToken("access"),
+  authenticateRequest,
   validateRequest(updatePasswordSchema),
   updatePassword
 );

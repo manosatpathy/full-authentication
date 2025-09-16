@@ -1,13 +1,13 @@
 import { Router } from "express";
-import { authorize, verifyToken } from "../middlewares/authMiddleware";
+import { authenticateRequest, authorize } from "../middlewares/authMiddleware";
 import { getAllUsers, updateUserRole } from "../controllers/adminController";
 
 const router = Router();
 
-router.get("/users", verifyToken("access"), authorize("admin"), getAllUsers);
+router.get("/users", authenticateRequest, authorize("admin"), getAllUsers);
 router.patch(
   "/users/:userId/role",
-  verifyToken("access"),
+  authenticateRequest,
   authorize("admin"),
   updateUserRole
 );

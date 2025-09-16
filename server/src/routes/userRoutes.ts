@@ -6,20 +6,20 @@ import {
 } from "../controllers/userController";
 import { checkUsernameSchema } from "../validators/usernameSchema";
 import { validateRequest } from "../middlewares/validationMiddleware";
-import { verifyToken } from "../middlewares/authMiddleware";
+import { authenticateRequest } from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.get("/me", verifyToken("access"), getCurrentUser);
+router.get("/me", authenticateRequest, getCurrentUser);
 router.get(
   "/check-username",
-  verifyToken("access"),
+  authenticateRequest,
   validateRequest(checkUsernameSchema, "query"),
   checkUsername
 );
 router.patch(
   "/username",
-  verifyToken("access"),
+  authenticateRequest,
   validateRequest(checkUsernameSchema),
   updateUsername
 );
