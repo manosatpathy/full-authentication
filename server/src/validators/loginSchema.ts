@@ -1,10 +1,7 @@
 import { z } from "zod";
+import { emailSchema, passwordSchema, usernameSchema } from "./baseSchema";
 
 export const loginSchema = z.object({
-  identifier: z
-    .string()
-    .nonempty("Email or Username required")
-    .trim()
-    .toLowerCase(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  identifier: z.union([usernameSchema, emailSchema]),
+  password: passwordSchema,
 });
