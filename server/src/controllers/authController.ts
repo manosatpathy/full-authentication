@@ -1,11 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import {
   findUser,
-  findUserByRefreshToken,
-  rotateRefreshToken,
   sendLoginVerification,
   sendSignupVerification,
-  sendVerificationOTP,
   verifyUserEmail,
 } from "../services/authServices";
 import bcrypt from "bcrypt";
@@ -19,6 +16,8 @@ import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
 import User from "../models/userModel";
 import { redisClient } from "./../config/redis";
+import jwt from "jsonwebtoken";
+import { DecodedToken } from "../types/tokenTypes";
 
 export const registerController = async (
   req: Request,
@@ -52,7 +51,7 @@ export const verifyUserController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const { token } = req.body;
+  const { token } = req.validatedParams;
   try {
     if (!token) {
       throw new ErrorHandler("verification token is required", 400);
@@ -146,28 +145,30 @@ export const refreshTokenController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
-
-  if (!refreshToken) {
-    throw new ErrorHandler("Refresh Token not found", 401);
-  }
+  const refreshToken = req.cookies.refreshToken;
 
   try {
+    if (!refreshToken) {
+      throw new ErrorHandler("Refresh Token not found", 401);
+    }
+
     const decoded = generateDecodedToken(refreshToken, "refresh");
-    const user = await findUserByRefreshToken(decoded.userId, refreshToken);
 
-    const { token: newRefreshToken, expiry } = generateRefreshToken(
-      user._id.toString()
-    );
+    const storedToken = await redisClient.get(`refreshKey:${decoded.userId}`);
+    if (storedToken !== refreshToken) {
+      throw new ErrorHandler("Token Expired", 401);
+    }
 
-    rotateRefreshToken(user, refreshToken, newRefreshToken, expiry);
-    await user.save();
+    const accessToken = generateAccessToken(decoded.userId);
 
-    const accessToken = generateAccessToken(user._id, user.email, user.role);
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 15 * 60 * 1000,
+    });
 
-    setAuthCookies(res, accessToken, newRefreshToken);
-
-    res.status(200).json({ accessToken, message: "Token rotated" });
+    res.status(200).json({ message: "Token refreshed" });
   } catch (error) {
     next(error);
   }
@@ -179,7 +180,7 @@ export const logoutController = async (
   next: NextFunction
 ) => {
   const refreshToken = req.cookies.refreshToken;
-  const userId = req.user?.userId;
+  const userId = req.user?.id;
   try {
     if (!userId) {
       throw new ErrorHandler("User not found", 404);
