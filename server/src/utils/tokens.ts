@@ -1,12 +1,11 @@
 import jwt from "jsonwebtoken";
-import { Types } from "mongoose";
+import crypto from "crypto";
 import { DecodedToken } from "../types/tokenTypes";
 import { ErrorHandler } from "./errorHandler";
-import crypto from "crypto";
 
 export const generateAccessToken = (userId: string) => {
   return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET!, {
-    expiresIn: "15m",
+    expiresIn: "1m",
   });
 };
 
@@ -16,33 +15,19 @@ export const generateRefreshToken = (userId: string) => {
   });
 };
 
-export const generateResetPasswordToken = (
-  userId: Types.ObjectId,
-  email: string
-) => {
-  return jwt.sign({ userId, email }, process.env.RESET_PASSWORD_TOKEN_SECRET!, {
-    expiresIn: "5m",
-  });
+export const generateRandomToken = () => {
+  return crypto.randomBytes(32).toString("hex");
 };
 
 export const generateDecodedToken = (
   token: string,
-  type: "access" | "refresh" | "reset"
+  type: "access" | "refresh"
 ): DecodedToken => {
   let secret;
-
-  switch (type) {
-    case "access":
-      secret = process.env.ACCESS_TOKEN_SECRET;
-      break;
-    case "refresh":
-      secret = process.env.REFRESH_TOKEN_SECRET;
-      break;
-    case "reset":
-      secret = process.env.RESET_PASSWORD_TOKEN_SECRET;
-      break;
-    default:
-      throw new Error("Invalid token type");
+  if (type === "access") {
+    secret = process.env.ACCESS_TOKEN_SECRET;
+  } else if (type === "refresh") {
+    secret = process.env.REFRESH_TOKEN_SECRET;
   }
 
   if (!secret) {
@@ -50,13 +35,9 @@ export const generateDecodedToken = (
   }
 
   try {
-    const decoded = jwt.verify(token, secret) as DecodedToken;
+    const decoded = jwt.verify(token, secret as string) as DecodedToken;
     return decoded;
-  } catch (err: any) {
+  } catch (error) {
     throw new ErrorHandler(`Invalid or expired ${type} token`, 401);
   }
-};
-
-export const generateRandomToken = () => {
-  return crypto.randomBytes(32).toString("hex");
 };
