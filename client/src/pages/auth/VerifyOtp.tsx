@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { SiAuthelia } from "react-icons/si";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import OtpInputs from "../../components/OtpInputs";
 import OtpTimer from "../../components/OtpTimer";
 import { useVerifyEmail } from "../../hooks/useVerifyEmail";
@@ -13,8 +13,6 @@ const VerifyOTP = () => {
   const [timeLeft, setTimeLeft] = useState(
     Math.max(0, Math.floor((otpExpires - Date.now()) / 1000))
   );
-  const [searchParams] = useSearchParams();
-  const userId = searchParams.get("userId");
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -28,14 +26,15 @@ const VerifyOTP = () => {
   const { mutate: resendLink } = useResendOtp(setTimeLeft);
 
   const onSubmit = () => {
-    if (!userId) return;
-    verify({ otp: otpFields.join(""), userId });
+    const identifier = localStorage.getItem("identifier");
+    if (!identifier) return;
+    verify({ otp: otpFields.join(""), identifier });
   };
 
   return (
     <div className="flex flex-col items-center gap-4">
       <SiAuthelia className="text-5xl" />
-      <h1 className="text-2xl font-bold mb-10">Verify Email By OTP</h1>
+      <h1 className="text-2xl font-bold mb-7">Verify Your Account</h1>
 
       <div className="flex flex-col gap-5 items-center">
         <OtpInputs
@@ -54,7 +53,7 @@ const VerifyOTP = () => {
               : "cursor-pointer"
           }`}
         >
-          Verify Email OTP
+          Verify OTP
         </button>
 
         <OtpTimer timeLeft={timeLeft} onResend={() => resendLink()} />
