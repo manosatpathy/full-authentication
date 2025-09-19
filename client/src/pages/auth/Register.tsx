@@ -30,9 +30,9 @@ const Register = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.register,
-    onSuccess: () => {
-      showToast({ message: "Register Success!", type: "SUCCESS" });
-      navigate("/auth/login");
+    onSuccess: (res) => {
+      showToast({ message: res.message, type: "SUCCESS" });
+      navigate("/");
     },
     onError: (error) => {
       showToast({ message: error.message, type: "ERROR" });
