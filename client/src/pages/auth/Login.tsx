@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { useAppContext } from "@/context/AppContext";
 import { loginSchema, type LoginFormType } from "@/schemas/logIn";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { SiAuthelia } from "react-icons/si";
 import { Link, useNavigate } from "react-router-dom";
@@ -12,22 +12,26 @@ import * as apiClient from "../../api-Client";
 const Login = () => {
   const navigate = useNavigate();
   const { showToast } = useAppContext();
-  const queryClient = useQueryClient();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm<LoginFormType>({
     resolver: zodResolver(loginSchema),
   });
+  const identifier = watch("identifier");
 
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.login,
     onSuccess: async () => {
-      showToast({ message: "Login Successful!", type: "SUCCESS" });
-      await queryClient.invalidateQueries({ queryKey: ["me"] });
-      navigate("/");
+      localStorage.setItem("identifier", identifier);
+      showToast({
+        message: "Verification OTP has been sent to your Email!",
+        type: "SUCCESS",
+      });
+      navigate("/auth/verify-otp");
     },
     onError: (error) => {
       showToast({ message: error.message, type: "ERROR" });
