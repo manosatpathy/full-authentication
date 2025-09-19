@@ -18,6 +18,20 @@ export const register = async (formData: RegistrationType) => {
   }
 };
 
+export const verifyUser = async (token: string) => {
+  try {
+    const response = await axiosInstance.post(`/auth/verify/${token}`);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message =
+        error.response?.data?.message || "User verification failed.";
+      throw new Error(message);
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
+
 export const login = async (formData: LoginFormType) => {
   try {
     const response = await axiosInstance.post("/auth/login", formData);
@@ -91,15 +105,15 @@ export const refreshToken = async () => {
 
 export const verifyEmail = async ({
   otp,
-  userId,
+  identifier,
 }: {
   otp: string;
-  userId: string;
+  identifier: string;
 }) => {
   try {
-    const response = await axiosInstance.post("/auth/verify-mail", {
+    const response = await axiosInstance.post("/auth/verify", {
       otp,
-      userId,
+      identifier,
     });
     return response.data;
   } catch (error) {
