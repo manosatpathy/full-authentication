@@ -9,7 +9,9 @@ const connectDb = async () => {
       throw new ErrorHandler("MONGODB_CONNECTION_STRING is not defined", 500);
     }
 
-    await mongoose.connect(dbUrl);
+    await mongoose.connect(dbUrl, {
+      dbName: "Full_Auth",
+    });
     console.log("Database connected successfully");
   } catch (error: any) {
     throw new ErrorHandler(`DB connection failed: ${error.message}`, 500);
