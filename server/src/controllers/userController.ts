@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response } from "express";
-import { findUser } from "../services/authServices";
 import { ErrorHandler } from "../utils/errorHandler";
 import {
   checkUsernameAvailability,
@@ -11,18 +10,8 @@ export const getCurrentUser = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.user?.userId;
-
   try {
-    const user = await findUser({ id: userId }, [
-      "email",
-      "username",
-      "email_verified",
-      "role",
-    ]);
-    if (!user) {
-      throw new ErrorHandler("User with id not found", 404);
-    }
+    const user = req.user;
     res.status(200).json({
       message: "User fetched success",
       user,
