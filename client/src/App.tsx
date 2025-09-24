@@ -12,14 +12,18 @@ import PageNotFound from "./pages/PageNotFound";
 import Profile from "./pages/Profile";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AuthenticatedRoute from "./utils/protectedRoutes/AuthenticatedRoute";
-import TokenProtectedRoute from "./utils/protectedRoutes/TokenProtectedRoute";
-import UserIdProtectedRoute from "./utils/protectedRoutes/UserIdProtectedRoute";
+import Verify from "./pages/auth/Verify";
+import { AppContextProvider } from "./context/AppContext";
 
 function App() {
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <MainLayout />,
+      element: (
+        <AppContextProvider>
+          <MainLayout />
+        </AppContextProvider>
+      ),
       children: [
         {
           path: "/",
@@ -31,34 +35,28 @@ function App() {
           element: <AuthLayout />,
           children: [
             {
-              path: "login",
-              element: <Login />,
-            },
-            {
               path: "register",
               element: <Register />,
+            },
+            {
+              path: "verify/:token",
+              element: <Verify />,
+            },
+            {
+              path: "login",
+              element: <Login />,
             },
             {
               path: "forget-password",
               element: <ForgetPassword />,
             },
             {
-              element: <TokenProtectedRoute />,
-              children: [
-                {
-                  path: "reset-password",
-                  element: <ResetPassword />,
-                },
-              ],
+              path: "reset-password",
+              element: <ResetPassword />,
             },
             {
-              element: <UserIdProtectedRoute />,
-              children: [
-                {
-                  path: "verify-otp",
-                  element: <VerifyOTP />,
-                },
-              ],
+              path: "verify-otp",
+              element: <VerifyOTP />,
             },
           ],
         },
