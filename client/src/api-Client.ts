@@ -88,21 +88,6 @@ export const logOut = async () => {
   }
 };
 
-export const refreshToken = async () => {
-  try {
-    const response = await axiosInstance.post("/auth/refresh-token");
-    return response.data;
-  } catch (error) {
-    if (axios.isAxiosError(error)) {
-      console.log(error);
-      const message =
-        error.response?.data?.message || "Error during refresh Token";
-      throw new Error(message);
-    }
-    throw new Error("An unexpected error occurred");
-  }
-};
-
 export const verifyEmail = async ({
   otp,
   identifier,

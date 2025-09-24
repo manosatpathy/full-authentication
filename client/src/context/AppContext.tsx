@@ -1,9 +1,9 @@
 import Toast from "@/components/Toast";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createContext, useCallback, useContext, useState } from "react";
 import * as apiClient from "../api-Client";
 import { useLogout } from "@/hooks/useLogout";
-import { is401 } from "@/utils/is401";
+import { useNavigate } from "react-router-dom";
 
 export type ToastMessage = {
   message: string;
@@ -15,7 +15,6 @@ export interface User {
   username: string;
   email: string;
   role: string;
-  email_verified: boolean;
 }
 
 type AppContext = {
@@ -38,36 +37,19 @@ export const AppContextProvider = ({
     (toastMessage: ToastMessage) => setToast(toastMessage),
     []
   );
-  const logoutMutation = useLogout(showToast);
-  const qc = useQueryClient();
+  const navigate = useNavigate();
+
+  const logoutMutation = useLogout(showToast, navigate);
 
   const { data, isLoading } = useQuery({
     queryKey: ["me"],
-    queryFn: async () => {
-      try {
-        return await apiClient.getCurrentUser();
-      } catch (err) {
-        if (!is401(err)) throw err;
-        try {
-          await apiClient.refreshToken();
-          return await apiClient.getCurrentUser();
-        } catch (refreshErr) {
-          await logoutMutation.mutateAsync();
-          qc.setQueryData(["me"], { user: null });
-          throw refreshErr;
-        }
-      }
-    },
+    queryFn: apiClient.getCurrentUser,
     retry: false,
   });
 
   const logout = useCallback(() => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        qc.setQueryData(["me"], { user: null });
-      },
-    });
-  }, [logoutMutation, qc]);
+    logoutMutation.mutate();
+  }, [logoutMutation]);
 
   const user = data?.user ?? null;
   const isAuthenticated = !!user;
