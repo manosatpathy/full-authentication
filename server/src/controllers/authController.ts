@@ -8,16 +8,14 @@ import {
 import bcrypt from "bcrypt";
 import {
   generateAccessToken,
+  generateCsrfToken,
   generateDecodedToken,
-  generateRefreshToken,
+  generateTokens,
 } from "../utils/tokens";
 import { ErrorHandler } from "../utils/errorHandler";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
-import User from "../models/userModel";
 import { redisClient } from "./../config/redis";
-import jwt from "jsonwebtoken";
-import { DecodedToken } from "../types/tokenTypes";
 
 export const registerController = async (
   req: Request,
@@ -98,14 +96,19 @@ export const loginController = async (
   }
 };
 
-export const verifyOtp = async (
+export const verifyOtpController = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
     const { identifier, otp } = req.body;
-    let user = await findUser({ email: identifier, username: identifier });
+    let user = await findUser({ email: identifier, username: identifier }, [
+      "id",
+      "username",
+      "email",
+      "role",
+    ]);
     if (!user) {
       throw new ErrorHandler("User not found", 404);
     }
@@ -123,13 +126,16 @@ export const verifyOtp = async (
 
     await redisClient.del(otpKey);
 
-    const accessToken = generateAccessToken(user?._id.toString());
-    const refreshToken = generateRefreshToken(user?._id.toString());
+    const { accessToken, refreshToken, csrfToken } = generateTokens(
+      user?._id.toString()
+    );
 
     const refreshKey = `refreshKey:${user?._id}`;
+    const csrfKey = `csrfKey:${user?._id}`;
     await redisClient.set(refreshKey, refreshToken, { EX: 7 * 24 * 60 * 60 });
+    await redisClient.set(csrfKey, csrfToken, { EX: 3600 });
 
-    setAuthCookies(res, accessToken, refreshToken);
+    setAuthCookies(res, accessToken, refreshToken, csrfToken);
 
     res.status(200).json({
       message: `Welcome ${user?.username}`,
@@ -179,17 +185,46 @@ export const logoutController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const refreshToken = req.cookies.refreshToken;
   const userId = req.user?.id;
   try {
     if (!userId) {
-      throw new ErrorHandler("User not found", 404);
+      throw new ErrorHandler("User not authenticated", 401);
     }
-    await User.findByIdAndDelete(userId, {
-      $pull: { refreshTokens: { token: refreshToken } },
-    });
+
+    await redisClient.del(`refreshKey:${userId}`);
+    await redisClient.del(`csrfKey:${userId}`);
+    await redisClient.del(`user:${userId}`);
+
     clearAuthCookies(res);
+
     res.status(200).json({ error: false, message: "Logout Successfully!" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const refreshCsrfController = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new ErrorHandler("User not authenticated", 401);
+    }
+
+    const csrfKey = `csrfKey:${userId}`;
+
+    await redisClient.del(csrfKey);
+
+    const newCsrfToken = generateCsrfToken();
+
+    await redisClient.set(csrfKey, newCsrfToken, { EX: 3600 });
+    res.json({
+      message: "CSRF token refreshed successfully",
+      csrfToken: newCsrfToken,
+    });
   } catch (error) {
     next(error);
   }
