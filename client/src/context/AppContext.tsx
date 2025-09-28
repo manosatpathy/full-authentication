@@ -1,9 +1,16 @@
 import Toast from "@/components/Toast";
 import { useQuery } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import * as apiClient from "../api-Client";
 import { useLogout } from "@/hooks/useLogout";
 import { useNavigate } from "react-router-dom";
+import { setLogoutFunction } from "@/utils/AxiosInstance";
 
 export type ToastMessage = {
   message: string;
@@ -50,6 +57,10 @@ export const AppContextProvider = ({
   const logout = useCallback(() => {
     logoutMutation.mutate();
   }, [logoutMutation]);
+
+  useEffect(() => {
+    setLogoutFunction(logout);
+  }, [logout]);
 
   const user = data?.user ?? null;
   const isAuthenticated = !!user;
