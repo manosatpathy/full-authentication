@@ -27,7 +27,7 @@ export const checkUsername = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       throw new ErrorHandler("User not found", 401);
     }
@@ -51,7 +51,7 @@ export const updateUsername = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.userId;
+    const userId = req.user?.id;
     if (!userId) {
       throw new ErrorHandler("User not found", 401);
     }
