@@ -1,22 +1,12 @@
-import crypto from "crypto";
 import { redisClient } from "../config/redis";
 import { NextFunction, Request, Response } from "express";
 import { ErrorHandler } from "../utils/errorHandler";
 
-const generateCsrfToken = async (userId: String, res: Response) => {
-  const csrfToken = crypto.randomBytes(32).toString("hex");
-  const csrfKey = `csrf:${userId}`;
-  await redisClient.set(csrfKey, csrfToken, { EX: 3600 });
-  res.cookie("csrfToken", csrfToken, {
-    httpOnly: false,
-    secure: true,
-    sameSite: "none",
-    maxAge: 60 * 60 * 1000,
-  });
-  return csrfToken;
-};
-
-const verifyCsrf = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyCsrf = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     if (req.method === "GET") {
       next();
@@ -40,7 +30,8 @@ const verifyCsrf = async (req: Request, res: Response, next: NextFunction) => {
       );
     }
 
-    const storedToken = await redisClient.get(`csrf:${userId}`);
+    const storedToken = await redisClient.get(`csrfKey:${userId}`);
+
     if (!storedToken) {
       throw new ErrorHandler(
         "CSRF Token expired. Please try again.",
