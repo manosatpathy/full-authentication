@@ -3,9 +3,13 @@ import crypto from "crypto";
 import { DecodedToken } from "../types/tokenTypes";
 import { ErrorHandler } from "./errorHandler";
 
+export const generateRandomToken = () => {
+  return crypto.randomBytes(32).toString("hex");
+};
+
 export const generateAccessToken = (userId: string) => {
   return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET!, {
-    expiresIn: "1m",
+    expiresIn: "15m",
   });
 };
 
@@ -15,8 +19,16 @@ export const generateRefreshToken = (userId: string) => {
   });
 };
 
-export const generateRandomToken = () => {
-  return crypto.randomBytes(32).toString("hex");
+export const generateCsrfToken = () => {
+  const csrfToken = generateRandomToken();
+  return csrfToken;
+};
+
+export const generateTokens = (userId: string) => {
+  const accessToken = generateAccessToken(userId);
+  const refreshToken = generateRefreshToken(userId);
+  const csrfToken = generateCsrfToken();
+  return { accessToken, refreshToken, csrfToken };
 };
 
 export const generateDecodedToken = (
@@ -38,6 +50,10 @@ export const generateDecodedToken = (
     const decoded = jwt.verify(token, secret as string) as DecodedToken;
     return decoded;
   } catch (error) {
-    throw new ErrorHandler(`Invalid or expired ${type} token`, 401);
+    throw new ErrorHandler(
+      `Invalid or expired ${type} token`,
+      401,
+      "REFRESH_TOKEN_INVALID"
+    );
   }
 };
