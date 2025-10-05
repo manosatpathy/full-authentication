@@ -12,8 +12,8 @@ export const useVerifyEmail = () => {
     mutationFn: apiClient.verifyEmail,
     onSuccess: async () => {
       showToast({ message: "Account Verified!", type: "SUCCESS" });
-      await queryClient.invalidateQueries({ queryKey: ["me"] });
       localStorage.removeItem("identifier");
+      await queryClient.refetchQueries({ queryKey: ["me"], exact: true });
       navigate("/");
     },
     onError: (error) => {
