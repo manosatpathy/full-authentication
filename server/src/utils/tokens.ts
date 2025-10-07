@@ -7,16 +7,20 @@ export const generateRandomToken = () => {
   return crypto.randomBytes(32).toString("hex");
 };
 
-export const generateAccessToken = (userId: string) => {
-  return jwt.sign({ userId }, process.env.ACCESS_TOKEN_SECRET!, {
+export const generateAccessToken = (userId: string, sessionId: string) => {
+  return jwt.sign({ userId, sessionId }, process.env.ACCESS_TOKEN_SECRET!, {
     expiresIn: "15m",
   });
 };
 
-export const generateRefreshToken = (userId: string) => {
-  return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET as string, {
-    expiresIn: "7d",
-  });
+export const generateRefreshToken = (userId: string, sessionId: string) => {
+  return jwt.sign(
+    { userId, sessionId },
+    process.env.REFRESH_TOKEN_SECRET as string,
+    {
+      expiresIn: "7d",
+    }
+  );
 };
 
 export const generateCsrfToken = () => {
@@ -24,9 +28,9 @@ export const generateCsrfToken = () => {
   return csrfToken;
 };
 
-export const generateTokens = (userId: string) => {
-  const accessToken = generateAccessToken(userId);
-  const refreshToken = generateRefreshToken(userId);
+export const generateTokens = (userId: string, sessionId: string) => {
+  const accessToken = generateAccessToken(userId, sessionId);
+  const refreshToken = generateRefreshToken(userId, sessionId);
   const csrfToken = generateCsrfToken();
   return { accessToken, refreshToken, csrfToken };
 };
