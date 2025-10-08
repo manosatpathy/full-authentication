@@ -4,6 +4,7 @@ import {
   checkUsernameAvailability,
   validateAndUpdateUsername,
 } from "../services/profileService";
+import { redisClient } from "../config/redis";
 
 export const getCurrentUser = async (
   req: Request,
@@ -12,9 +13,24 @@ export const getCurrentUser = async (
 ) => {
   try {
     const user = req.user;
+    const sessionId = req.sessionId;
+
+    const sessionData = await redisClient.get(`session:${sessionId}`);
+    let sessionInfo = null;
+
+    if (sessionData) {
+      const parsedSession = JSON.parse(sessionData);
+      sessionInfo = {
+        sessionId,
+        loginTime: parsedSession.createdAt,
+        lastActivity: parsedSession.lastActivity,
+      };
+    }
+
     res.status(200).json({
       message: "User fetched success",
       user,
+      sessionInfo,
     });
   } catch (error) {
     next(error);
