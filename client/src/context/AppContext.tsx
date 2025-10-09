@@ -1,5 +1,5 @@
 import Toast from "@/components/Toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   useCallback,
@@ -10,7 +10,7 @@ import {
 import * as apiClient from "../api-Client";
 import { useLogout } from "@/hooks/useLogout";
 import { useNavigate } from "react-router-dom";
-import { setLogoutFunction } from "@/utils/AxiosInstance";
+import { setClientCleanup } from "@/utils/apiInterceptor";
 
 export type ToastMessage = {
   message: string;
@@ -45,7 +45,7 @@ export const AppContextProvider = ({
     []
   );
   const navigate = useNavigate();
-
+  const queryClient = useQueryClient();
   const logoutMutation = useLogout(showToast, navigate);
 
   const { data, isLoading } = useQuery({
@@ -59,8 +59,14 @@ export const AppContextProvider = ({
   }, [logoutMutation]);
 
   useEffect(() => {
-    setLogoutFunction(logout);
-  }, [logout]);
+    const cleanupFunction = () => {
+      queryClient.setQueryData(["me"], null);
+      queryClient.removeQueries({ queryKey: ["me"] });
+      navigate("/", { replace: true });
+    };
+
+    setClientCleanup(cleanupFunction);
+  }, [queryClient, navigate]);
 
   const user = data?.user ?? null;
   const isAuthenticated = !!user;
