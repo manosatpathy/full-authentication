@@ -10,12 +10,14 @@ import {
   generateAccessToken,
   generateCsrfToken,
   generateDecodedToken,
+  generateRandomToken,
   generateTokens,
 } from "../utils/tokens";
 import { ErrorHandler } from "../utils/errorHandler";
 import { clearAuthCookies } from "./../utils/clearAuthCookies";
 import { setAuthCookies } from "../utils/setAuthCookies";
 import { redisClient } from "./../config/redis";
+import { updateSessionActivity } from "../utils/sessionValidator";
 
 export const registerController = async (
   req: Request,
@@ -113,7 +115,7 @@ export const verifyOtpController = async (
       throw new ErrorHandler("User not found", 404);
     }
 
-    const otpKey = `otp:${user?.email}`;
+    const otpKey = `otp:${user.email}`;
     const storedOtp = await redisClient.get(otpKey);
 
     if (!storedOtp) {
@@ -126,20 +128,56 @@ export const verifyOtpController = async (
 
     await redisClient.del(otpKey);
 
+    const activeSessionKey = `active_session:${user._id}`;
+    const existingSession = await redisClient.getDel(activeSessionKey);
+
+    if (existingSession) {
+      await Promise.all([
+        redisClient.del(`session:${existingSession}`),
+        redisClient.del(`refreshKey:${user._id}`),
+      ]);
+    }
+
+    const sessionId = generateRandomToken();
     const { accessToken, refreshToken, csrfToken } = generateTokens(
-      user?._id.toString()
+      user._id.toString(),
+      sessionId
     );
 
-    const refreshKey = `refreshKey:${user?._id}`;
-    const csrfKey = `csrfKey:${user?._id}`;
-    await redisClient.set(refreshKey, refreshToken, { EX: 7 * 24 * 60 * 60 });
-    await redisClient.set(csrfKey, csrfToken, { EX: 3600 });
+    const sessionData = {
+      userId: user._id,
+      sessionId,
+      createdAt: new Date().toISOString(),
+      lastActivity: new Date().toISOString(),
+    };
+
+    const sessionDataKey = `session:${sessionId}`;
+    const refreshTokenKey = `refreshKey:${user._id}`;
+    const csrfTokenKey = `csrfKey:${user._id}`;
+
+    await Promise.all([
+      redisClient.set(refreshTokenKey, refreshToken, {
+        EX: 7 * 24 * 60 * 60,
+      }),
+      redisClient.set(activeSessionKey, sessionId, {
+        EX: 7 * 24 * 60 * 60,
+      }),
+      redisClient.set(sessionDataKey, JSON.stringify(sessionData), {
+        EX: 7 * 24 * 60 * 60,
+      }),
+      redisClient.set(csrfTokenKey, csrfToken, { EX: 3600 }),
+    ]);
 
     setAuthCookies(res, accessToken, refreshToken, csrfToken);
 
     res.status(200).json({
-      message: `Welcome ${user?.username}`,
+      message: `Welcome ${user.username}`,
       user,
+      sessionInfo: {
+        sessionId,
+        loginTime: new Date().toISOString(),
+        csrfToken,
+      },
     });
   } catch (error) {
     next(error);
@@ -155,17 +193,47 @@ export const refreshTokenController = async (
 
   try {
     if (!refreshToken) {
-      throw new ErrorHandler("Refresh Token not found", 401);
+      throw new ErrorHandler(
+        "Refresh Token not found",
+        401,
+        "REFRESH_TOKEN_MISSING"
+      );
     }
 
     const decoded = generateDecodedToken(refreshToken, "refresh");
 
     const storedToken = await redisClient.get(`refreshKey:${decoded.userId}`);
-    if (storedToken !== refreshToken) {
-      throw new ErrorHandler("Token Expired", 401);
+    if (!storedToken) {
+      throw new ErrorHandler(
+        "Refresh token expired. Please log in again",
+        401,
+        "REFRESH_TOKEN_EXPIRED"
+      );
     }
 
-    const accessToken = generateAccessToken(decoded.userId);
+    const activeSessionId = await redisClient.get(
+      `active_session:${decoded.userId}`
+    );
+
+    if (!activeSessionId) {
+      throw new ErrorHandler(
+        "Session not found. Please log in again",
+        401,
+        "SESSION_NOT_FOUND"
+      );
+    }
+
+    if (storedToken !== refreshToken || decoded.sessionId !== activeSessionId) {
+      throw new ErrorHandler(
+        "Session invalidated. You may have logged in from another device",
+        401,
+        "SESSION_INVALIDATED"
+      );
+    }
+
+    await updateSessionActivity(activeSessionId);
+
+    const accessToken = generateAccessToken(decoded.userId, decoded.sessionId);
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -174,8 +242,9 @@ export const refreshTokenController = async (
       maxAge: 15 * 60 * 1000,
     });
 
-    res.status(200).json({ message: "Token refreshed" });
+    res.status(200).json({ message: "Token refreshed successfully" });
   } catch (error) {
+    clearAuthCookies(res);
     next(error);
   }
 };
@@ -185,15 +254,20 @@ export const logoutController = async (
   res: Response,
   next: NextFunction
 ) => {
-  const userId = req.user?.id;
   try {
-    if (!userId) {
-      throw new ErrorHandler("User not authenticated", 401);
-    }
+    const userId = req.user?.id;
 
-    await redisClient.del(`refreshKey:${userId}`);
-    await redisClient.del(`csrfKey:${userId}`);
-    await redisClient.del(`user:${userId}`);
+    const activeSessionId = await redisClient.get(`active_session:${userId}`);
+
+    await Promise.all([
+      redisClient.del(`active_session:${userId}`),
+      redisClient.del(`refreshKey:${userId}`),
+      redisClient.del(`csrfKey:${userId}`),
+      redisClient.del(`user:${userId}`),
+      activeSessionId
+        ? redisClient.del(`session:${activeSessionId}`)
+        : Promise.resolve(),
+    ]);
 
     clearAuthCookies(res);
 
@@ -215,12 +289,16 @@ export const refreshCsrfController = async (
     }
 
     const csrfKey = `csrfKey:${userId}`;
-
-    await redisClient.del(csrfKey);
-
     const newCsrfToken = generateCsrfToken();
-
     await redisClient.set(csrfKey, newCsrfToken, { EX: 3600 });
+
+    res.cookie("csrfToken", newCsrfToken, {
+      httpOnly: false,
+      secure: true,
+      sameSite: "none",
+      maxAge: 60 * 60 * 1000,
+    });
+
     res.json({
       message: "CSRF token refreshed successfully",
       csrfToken: newCsrfToken,
