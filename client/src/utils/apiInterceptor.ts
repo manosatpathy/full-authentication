@@ -1,5 +1,4 @@
-import axios from "axios";
-import axiosInstance from "./axiosInstance";
+import axiosInstance, { refreshAxiosInstance } from "./axiosInstance";
 
 interface FailedQueueItem {
   resolve: (value?: unknown) => void;
@@ -7,12 +6,16 @@ interface FailedQueueItem {
 }
 
 let clientCleanup: (() => void) | null = null;
+let isLoggingOut = false;
 
 export const setClientCleanup = (cleanupFn: () => void) => {
   clientCleanup = cleanupFn;
 };
 
 const performClientCleanup = () => {
+  if (isLoggingOut) return;
+  isLoggingOut = true;
+
   if (clientCleanup) {
     clientCleanup();
   } else {
@@ -82,6 +85,16 @@ axiosInstance.interceptors.response.use(
     const originalRequest = error.config;
     const errorCode = error.response?.data?.code || "";
 
+    if (isLoggingOut) {
+      return Promise.reject(error);
+    }
+
+    if (originalRequest.url === "/auth/refresh-token") {
+      console.log("Refresh token request failed - logging out");
+      performClientCleanup();
+      return Promise.reject(error);
+    }
+
     if (error.response?.status === 403 && !originalRequest._retry) {
       if (errorCode.startsWith("CSRF_")) {
         if (isRefreshingCsrf) {
@@ -107,42 +120,47 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401) {
       console.log("hitting refresh logic");
 
-      if (errorCode.startsWith("REFRESH_")) {
-        console.log("Refresh token not found or invalid - logging out user");
+      if (originalRequest._retry) {
+        console.log("Request already retried once, failing permanently");
         performClientCleanup();
-        return Promise.reject(
-          new Error("Refresh token not found. Please login again.")
-        );
+        return Promise.reject(error);
+      }
+
+      if (errorCode.startsWith("REFRESH_")) {
+        console.log("Refresh token error code detected - logging out");
+        performClientCleanup();
+        return Promise.reject(error);
       }
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
-        }).then(() => axiosInstance(originalRequest));
+        })
+          .then(() => axiosInstance(originalRequest))
+          .catch((err) => {
+            // If queued request fails after refresh, don't try again
+            console.log("Queued request failed after token refresh");
+            return Promise.reject(err);
+          });
       }
 
       originalRequest._retry = true;
       isRefreshing = true;
 
       try {
-        await axiosInstance.post("/auth/refresh-token");
+        console.log("Attempting to refresh access token");
+        await refreshAxiosInstance.post("/auth/refresh-token");
+        console.log("Token refresh successful, retrying original request");
         processQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        if (axios.isAxiosError(refreshError)) {
-          if (refreshError.response?.status === 401) {
-            const refreshErrorCode = refreshError.response?.data?.code || "";
+        console.log("Token refresh failed:", refreshError);
 
-            if (refreshErrorCode.startsWith("REFRESH_")) {
-              console.log("Refresh token API failed - logging out");
-              performClientCleanup();
-            }
-          }
-        }
-
+        // Any refresh error means we should logout
+        performClientCleanup();
         processQueue(refreshError);
         return Promise.reject(refreshError);
       } finally {
