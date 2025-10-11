@@ -1,10 +1,8 @@
-import { Types } from "mongoose";
-import User, { UserType } from "../models/userModel";
+import User from "../models/userModel";
 import { FindUserType, UserInput } from "../types/userTypes";
 import { ErrorHandler } from "../utils/errorHandler";
 import generateOTP from "../utils/generateOTP";
 import { sendVerificationMail, sendVerificationOtp } from "./mailServices";
-import bcrypt from "bcrypt";
 import { generateRandomToken } from "../utils/tokens";
 import { redisClient } from "../config/redis";
 
@@ -69,6 +67,12 @@ export const verifyUserEmail = async (token: string) => {
 
   const userDataJson = JSON.parse(userData);
 
+  const existingUser = await User.findOne({ email: userDataJson.email });
+
+  if (existingUser) {
+    throw new ErrorHandler("User already exists", 400);
+  }
+
   const newUser = new User({
     username: userDataJson.username,
     email: userDataJson.email,
@@ -84,49 +88,4 @@ export const sendLoginVerification = async (email: string) => {
   await redisClient.set(otpKey, otp, { EX: 300 });
 
   await sendVerificationOtp(email, otp);
-};
-
-export const findUserByRefreshToken = async (
-  userId: string,
-  refreshToken: string
-) => {
-  const user = await User.findById(userId);
-  if (!user) throw new ErrorHandler("User not found", 404);
-
-  const tokenDoc = user.refreshTokens.find((t) => t.token === refreshToken);
-  if (!tokenDoc) throw new ErrorHandler("Invalid refresh token", 403);
-
-  if (!tokenDoc.expiresAt || tokenDoc.expiresAt.getTime() < Date.now()) {
-    throw new ErrorHandler("Refresh token expired", 403);
-  }
-
-  return user;
-};
-
-export const rotateRefreshToken = (
-  user: any,
-  oldToken: string,
-  newToken: string,
-  expiry: Date
-) => {
-  user.refreshTokens.pull({ token: oldToken });
-  user.refreshTokens.push({ token: newToken, expiresAt: expiry });
-};
-
-export const sendVerificationOTP = async (userId: string) => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new ErrorHandler("User not found", 404);
-  }
-  if (user.email_verified) {
-    throw new ErrorHandler("Email already verified", 400);
-  }
-
-  await setOTPAndSendMail(user);
-  await user.save();
-
-  return {
-    message: "Verification email sent successfully",
-    otpExpiry: user.otpExpires,
-  };
 };
