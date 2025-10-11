@@ -56,7 +56,6 @@ const failedCsrfQueue: Array<FailedQueueItem> = [];
 const processQueue = (error: unknown, token: string | null = null): void => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
-      console.log("hitting promise reject block", error);
       reject(error);
     } else {
       resolve(null);
@@ -90,7 +89,6 @@ axiosInstance.interceptors.response.use(
     }
 
     if (originalRequest.url === "/auth/refresh-token") {
-      console.log("Refresh token request failed - logging out");
       performClientCleanup();
       return Promise.reject(error);
     }
@@ -121,16 +119,12 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response?.status === 401) {
-      console.log("hitting refresh logic");
-
       if (originalRequest._retry) {
-        console.log("Request already retried once, failing permanently");
         performClientCleanup();
         return Promise.reject(error);
       }
 
       if (errorCode.startsWith("REFRESH_")) {
-        console.log("Refresh token error code detected - logging out");
         performClientCleanup();
         return Promise.reject(error);
       }
@@ -141,8 +135,6 @@ axiosInstance.interceptors.response.use(
         })
           .then(() => axiosInstance(originalRequest))
           .catch((err) => {
-            // If queued request fails after refresh, don't try again
-            console.log("Queued request failed after token refresh");
             return Promise.reject(err);
           });
       }
@@ -151,15 +143,11 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log("Attempting to refresh access token");
         await refreshAxiosInstance.post("/auth/refresh-token");
-        console.log("Token refresh successful, retrying original request");
         processQueue(null);
         return axiosInstance(originalRequest);
       } catch (refreshError) {
         console.log("Token refresh failed:", refreshError);
-
-        // Any refresh error means we should logout
         performClientCleanup();
         processQueue(refreshError);
         return Promise.reject(refreshError);
