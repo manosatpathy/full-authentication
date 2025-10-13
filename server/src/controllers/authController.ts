@@ -85,13 +85,27 @@ export const loginController = async (
       throw new ErrorHandler("Invalid Credentials", 401);
     }
 
-    await sendLoginVerification(user.email);
+    const verificationKey = `pending-verification:${user.id}`;
+    const verificationData = JSON.stringify({
+      email: user.email,
+      userId: user.id,
+    });
+    await redisClient.set(verificationKey, verificationData, { EX: 600 });
 
+    await sendLoginVerification(user.email);
     await redisClient.set(rateLimitKey, "true", { EX: 60 });
+
+    res.cookie("v_s", user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+      maxAge: 10 * 60 * 1000,
+    });
 
     res.status(200).json({
       error: false,
       message: "Verification OTP has been sent. It will be valid for 5 min",
+      otpExpiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     });
   } catch (error) {
     next(error);
@@ -314,14 +328,42 @@ export const resendVerificationController = async (
   next: NextFunction
 ) => {
   try {
-    const userId = req.user?.userId;
+    const verificationSessionId = req.cookies.v_s;
 
-    const data = await sendVerificationOTP(userId!);
+    if (!verificationSessionId) {
+      throw new ErrorHandler(
+        "Verification session expired. Please login again.",
+        401
+      );
+    }
+
+    const verificationKey = `pending-verification:${verificationSessionId}`;
+    const sessionData = await redisClient.get(verificationKey);
+
+    if (!sessionData) {
+      throw new ErrorHandler(
+        "Verification session expired. Please login again.",
+        401
+      );
+    }
+
+    const { email, userId } = JSON.parse(sessionData);
+
+    const resendRateLimitKey = `resend-otp:${userId}`;
+    if (await redisClient.get(resendRateLimitKey)) {
+      throw new ErrorHandler(
+        "Please wait 60 seconds before requesting a new OTP",
+        429
+      );
+    }
+
+    await sendLoginVerification(email);
+    await redisClient.set(resendRateLimitKey, "true", { EX: 60 });
 
     res.status(200).json({
       error: false,
-      message: data.message,
-      otpExpiry: data.otpExpiry,
+      message: "Verification OTP has been resent",
+      otpExpiry: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
     });
   } catch (err) {
     next(err);
