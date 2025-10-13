@@ -2,17 +2,20 @@ import { Router } from "express";
 import {
   loginController,
   logoutController,
+  refreshCsrfController,
   refreshTokenController,
   registerController,
+  verifyOtpController,
   resendVerificationController,
-  verifyMailController,
+  verifyUserController,
 } from "../controllers/authController";
 import { validateRequest } from "../middlewares/validationMiddleware";
 import { registrationSchema } from "../validators/registrationSchema";
 import { verifyMailSchema } from "../validators/verifyMailSchema";
 import { loginSchema } from "../validators/loginSchema";
-import { verifyToken } from "../middlewares/authMiddleware";
-import loginLimiter from "../middlewares/loginLimiter";
+import { authenticateRequest } from "../middlewares/authMiddleware";
+import { verifyOtpSchema } from "../validators/verifyOtpSchema";
+import { verifyCsrf } from "../middlewares/csrfMiddleware";
 
 const router = Router();
 
@@ -22,22 +25,15 @@ router.post(
   registerController
 );
 router.post(
-  "/login",
-  validateRequest(loginSchema),
-  loginLimiter,
-  loginController
+  "/verify/:token",
+  validateRequest(verifyMailSchema, "params"),
+  verifyUserController
 );
-router.post("/logout", verifyToken("access"), logoutController);
+router.post("/login", validateRequest(loginSchema), loginController);
+router.post("/verify", validateRequest(verifyOtpSchema), verifyOtpController);
+router.post("/logout", authenticateRequest, verifyCsrf, logoutController);
 router.post("/refresh-token", refreshTokenController);
-router.post(
-  "/verify-mail",
-  validateRequest(verifyMailSchema),
-  verifyMailController
-);
-router.post(
-  "/resend-verification",
-  verifyToken("access"),
-  resendVerificationController
-);
+router.post("/resend-verification", resendVerificationController);
+router.post("/refresh-csrf", authenticateRequest, refreshCsrfController);
 
 export default router;
