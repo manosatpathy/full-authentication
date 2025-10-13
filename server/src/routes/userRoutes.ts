@@ -7,6 +7,7 @@ import {
 import { checkUsernameSchema } from "../validators/usernameSchema";
 import { validateRequest } from "../middlewares/validationMiddleware";
 import { authenticateRequest } from "../middlewares/authMiddleware";
+import { verifyCsrf } from "../middlewares/csrfMiddleware";
 
 const router = Router();
 
@@ -21,6 +22,7 @@ router.patch(
   "/username",
   authenticateRequest,
   validateRequest(checkUsernameSchema),
+  verifyCsrf,
   updateUsername
 );
 

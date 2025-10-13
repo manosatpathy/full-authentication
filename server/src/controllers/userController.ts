@@ -73,7 +73,19 @@ export const updateUsername = async (
     }
 
     const { newUsername } = req.body;
+
     const result = await validateAndUpdateUsername(newUsername, userId);
+
+    const userData = {
+      id: result.updatedUser?._id,
+      email: result.updatedUser?.email,
+      username: result.updatedUser?.username,
+      role: result.updatedUser?.role,
+    };
+
+    await redisClient.set(`user:${userId}`, JSON.stringify(userData), {
+      EX: 3600,
+    });
 
     res.status(200).json({
       updated: result.updated,
