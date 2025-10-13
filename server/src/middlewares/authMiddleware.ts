@@ -4,6 +4,11 @@ import { Role, User } from "../types/userTypes";
 import { redisClient } from "../config/redis";
 import { findUser } from "../services/authServices";
 import { generateDecodedToken } from "../utils/tokens";
+import {
+  isSessionActive,
+  updateSessionActivity,
+} from "../utils/sessionValidator";
+import { clearAuthCookies } from "../utils/clearAuthCookies";
 
 declare global {
   namespace Express {
@@ -11,6 +16,7 @@ declare global {
       validatedQuery?: any;
       validatedParams?: any;
       user?: User;
+      sessionId: string;
     }
   }
 }
@@ -26,9 +32,25 @@ export const authenticateRequest = async (
 
     const decoded = generateDecodedToken(token, "access");
 
+    const sessionActive = await isSessionActive({
+      userId: decoded.userId,
+      sessionId: decoded.sessionId,
+    });
+
+    if (!sessionActive) {
+      clearAuthCookies(res);
+      throw new ErrorHandler(
+        "Session Expired. You have been logged in from another device",
+        401
+      );
+    }
+
+    await updateSessionActivity(decoded.sessionId);
+
     const cachedUser = await redisClient.get(`user:${decoded.userId}`);
     if (cachedUser) {
       req.user = JSON.parse(cachedUser);
+      req.sessionId = decoded.sessionId;
       return next();
     }
     const user = await findUser({ id: decoded.userId }, [
@@ -53,6 +75,7 @@ export const authenticateRequest = async (
     });
 
     req.user = userData;
+    req.sessionId = decoded.sessionId;
     next();
   } catch (err) {
     next(err);
