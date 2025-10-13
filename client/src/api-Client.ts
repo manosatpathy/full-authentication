@@ -1,6 +1,6 @@
 import type { RegistrationType } from "./schemas/registration";
 import axios from "axios";
-import axiosInstance from "./utils/AxiosInstance";
+import axiosInstance from "./utils/axiosInstance";
 import type { LoginFormType } from "./schemas/logIn";
 import type { UpdatePasswordType } from "./schemas/updatePassword";
 import type { UsernameType } from "./schemas/username";
