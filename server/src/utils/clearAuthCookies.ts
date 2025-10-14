@@ -11,4 +11,9 @@ export const clearAuthCookies = (res: Response) => {
     secure: true,
     sameSite: "none",
   });
+  res.clearCookie("csrfToken", {
+    httpOnly: false,
+    secure: true,
+    sameSite: "none",
+  });
 };
