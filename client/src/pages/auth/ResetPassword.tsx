@@ -9,15 +9,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { SiAuthelia } from "react-icons/si";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import * as apiClient from "../../api-Client";
 
 const ResetPassword = () => {
   const { showToast } = useAppContext();
   const navigate = useNavigate();
 
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
+  const { token } = useParams();
 
   const {
     register,
@@ -46,11 +45,8 @@ const ResetPassword = () => {
       showToast({ message: "Invalid or missing reset token", type: "ERROR" });
       return;
     }
-    const resetData = {
-      ...formData,
-      token,
-    };
-    mutate(resetData);
+
+    mutate({ formData, token });
   };
 
   return (

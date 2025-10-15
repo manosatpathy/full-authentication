@@ -2,7 +2,11 @@ import User from "../models/userModel";
 import { FindUserType, UserInput } from "../types/userTypes";
 import { ErrorHandler } from "../utils/errorHandler";
 import generateOTP from "../utils/generateOTP";
-import { sendVerificationMail, sendVerificationOtp } from "./mailServices";
+import {
+  sendResetPasswordMail,
+  sendVerificationMail,
+  sendVerificationOtp,
+} from "./mailServices";
 import { generateRandomToken } from "../utils/tokens";
 import { redisClient } from "../config/redis";
 
@@ -88,4 +92,17 @@ export const sendLoginVerification = async (email: string) => {
   await redisClient.set(otpKey, otp, { EX: 300 });
 
   await sendVerificationOtp(email, otp);
+};
+
+export const sendResetPasswordLink = async (email: string, userId: string) => {
+  const token = generateRandomToken();
+  const resetKey = `password-reset:${token}`;
+
+  const dataToStore = JSON.stringify({
+    userId,
+    email,
+  });
+
+  await redisClient.set(resetKey, dataToStore, { EX: 900 });
+  await sendResetPasswordMail(email, token);
 };

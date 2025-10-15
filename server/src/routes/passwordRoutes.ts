@@ -4,17 +4,22 @@ import {
   resetPasswordController,
   updatePassword,
 } from "../controllers/passwordController";
-import { resetPasswordSchema } from "../validators/resetPasswordSchema";
+import {
+  resetPasswordParamsSchema,
+  resetPasswordBodySchema,
+} from "../validators/resetPasswordSchema";
 import { authenticateRequest } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validationMiddleware";
 import { updatePasswordSchema } from "../validators/updatePasswordSchema";
+import { emailSchema } from "../validators/baseSchema";
 
 const router = Router();
 
-router.post("/forget", forgetPasswordController);
+router.post("/forget", validateRequest(emailSchema), forgetPasswordController);
 router.post(
-  "/reset",
-  validateRequest(resetPasswordSchema),
+  "/reset/:token",
+  validateRequest(resetPasswordParamsSchema, "params"),
+  validateRequest(resetPasswordBodySchema),
   resetPasswordController
 );
 router.patch(

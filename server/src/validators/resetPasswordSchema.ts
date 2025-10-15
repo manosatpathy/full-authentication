@@ -1,6 +1,13 @@
 import { z } from "zod";
 
-export const resetPasswordSchema = z
+export const resetPasswordParamsSchema = z.object({
+  token: z
+    .string()
+    .min(1, "Token is required")
+    .regex(/^[a-f0-9]{64}$/, "Invalid token format"),
+});
+
+export const resetPasswordBodySchema = z
   .object({
     password: z
       .string()
@@ -10,7 +17,6 @@ export const resetPasswordSchema = z
         "Password must contain at least one letter and one number"
       ),
     confirmPassword: z.string(),
-    token: z.string().min(1, "Reset token is required"),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
