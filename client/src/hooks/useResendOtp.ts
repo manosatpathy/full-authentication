@@ -12,12 +12,14 @@ export const useResendOtp = (setTimeLeft: (t: number) => void) => {
         message: "Resent Email verification link!",
         type: "SUCCESS",
       });
-      setTimeLeft(
-        Math.max(
-          0,
-          Math.floor((new Date(data.otpExpiry).getTime() - Date.now()) / 1000)
-        )
+
+      localStorage.setItem("otpExpiry", data.otpExpiry);
+
+      const newTimeLeft = Math.max(
+        0,
+        Math.floor((new Date(data.otpExpiry).getTime() - Date.now()) / 1000)
       );
+      setTimeLeft(newTimeLeft);
     },
     onError: (error) => {
       showToast({ message: error.message, type: "ERROR" });

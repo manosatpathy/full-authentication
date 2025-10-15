@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { SiAuthelia } from "react-icons/si";
-import { useLocation } from "react-router-dom";
 import OtpInputs from "../../components/OtpInputs";
 import OtpTimer from "../../components/OtpTimer";
 import { useVerifyEmail } from "../../hooks/useVerifyEmail";
@@ -8,17 +7,33 @@ import { useResendOtp } from "../../hooks/useResendOtp";
 
 const VerifyOTP = () => {
   const [otpFields, setOtpFields] = useState(new Array(6).fill(""));
-  const location = useLocation();
-  const otpExpires = new Date(location.state?.otpExpires).getTime();
-  const [timeLeft, setTimeLeft] = useState(
-    Math.max(0, Math.floor((otpExpires - Date.now()) / 1000))
-  );
+
+  const getTimeLeft = () => {
+    const otpExpiry = localStorage.getItem("otpExpiry");
+    if (!otpExpiry) return 0;
+
+    const expiryTime = new Date(otpExpiry).getTime();
+    return Math.max(0, Math.floor((expiryTime - Date.now()) / 1000));
+  };
+
+  const [timeLeft, setTimeLeft] = useState(getTimeLeft());
 
   useEffect(() => {
-    if (timeLeft <= 0) return;
+    if (timeLeft <= 0) {
+      localStorage.removeItem("otpExpiry");
+      return;
+    }
+
     const interval = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          localStorage.removeItem("otpExpiry");
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
+
     return () => clearInterval(interval);
   }, [timeLeft]);
 
