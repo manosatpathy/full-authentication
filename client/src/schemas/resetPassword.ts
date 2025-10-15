@@ -1,5 +1,13 @@
 import { z } from "zod";
 
+export type ResetPasswordParams = {
+  formData: {
+    password: string;
+    confirmPassword: string;
+  };
+  token: string;
+};
+
 export const resetPasswordSchema = z
   .object({
     password: z

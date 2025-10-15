@@ -4,6 +4,7 @@ import axiosInstance from "./utils/axiosInstance";
 import type { LoginFormType } from "./schemas/logIn";
 import type { UpdatePasswordType } from "./schemas/updatePassword";
 import type { UsernameType } from "./schemas/username";
+import type { ResetPasswordParams } from "./schemas/resetPassword";
 
 export const register = async (formData: RegistrationType) => {
   try {
@@ -129,13 +130,15 @@ export const sendForgetPasswordLink = async (email: string) => {
   }
 };
 
-export const resetPassword = async (resetData: {
-  password: string;
-  confirmPassword: string;
-  token: string;
-}) => {
+export const resetPassword = async ({
+  formData,
+  token,
+}: ResetPasswordParams) => {
   try {
-    const response = await axiosInstance.post("/password/reset", resetData);
+    const response = await axiosInstance.post(
+      `/password/reset/${token}`,
+      formData
+    );
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
