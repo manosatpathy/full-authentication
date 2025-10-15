@@ -25,8 +25,9 @@ const Login = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.login,
-    onSuccess: async () => {
+    onSuccess: async (data) => {
       localStorage.setItem("identifier", identifier);
+      localStorage.setItem("otpExpiry", data.otpExpiry);
       showToast({
         message: "Verification OTP has been sent to your Email!",
         type: "SUCCESS",
