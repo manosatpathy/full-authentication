@@ -13,6 +13,7 @@ export const useVerifyEmail = () => {
     onSuccess: async () => {
       showToast({ message: "Account Verified!", type: "SUCCESS" });
       localStorage.removeItem("identifier");
+      localStorage.removeItem("otpExpiry");
       await queryClient.refetchQueries({ queryKey: ["me"], exact: true });
       navigate("/");
     },
