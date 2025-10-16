@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { emailSchema } from "./baseSchema";
 
 export const resetPasswordParamsSchema = z.object({
   token: z
@@ -22,3 +23,7 @@ export const resetPasswordBodySchema = z
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
+
+export const resetPasswordEmailSchema = z.object({
+  email: emailSchema,
+});

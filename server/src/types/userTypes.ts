@@ -6,7 +6,6 @@ export interface UserInput {
   username: string;
   password: string;
   email: string;
-  role?: Role;
 }
 
 export type FindUserType = {
@@ -18,4 +17,11 @@ export type FindUserType = {
 export type UpdateFields = {
   user: UserType;
   newPassword: string;
+};
+
+export type User = {
+  id: string;
+  email: string;
+  username: string;
+  role: Role;
 };

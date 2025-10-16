@@ -57,7 +57,7 @@ export const generateDecodedToken = (
     throw new ErrorHandler(
       `Invalid or expired ${type} token`,
       401,
-      "REFRESH_TOKEN_INVALID"
+      `${type.toUpperCase}_TOKEN_INVALID`
     );
   }
 };

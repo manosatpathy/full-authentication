@@ -11,11 +11,15 @@ import {
 import { authenticateRequest } from "../middlewares/authMiddleware";
 import { validateRequest } from "../middlewares/validationMiddleware";
 import { updatePasswordSchema } from "../validators/updatePasswordSchema";
-import { emailSchema } from "../validators/baseSchema";
+import { resetPasswordEmailSchema } from "./../validators/resetPasswordSchema";
 
 const router = Router();
 
-router.post("/forget", validateRequest(emailSchema), forgetPasswordController);
+router.post(
+  "/forget",
+  validateRequest(resetPasswordEmailSchema),
+  forgetPasswordController
+);
 router.post(
   "/reset/:token",
   validateRequest(resetPasswordParamsSchema, "params"),

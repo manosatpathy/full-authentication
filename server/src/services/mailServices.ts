@@ -1,13 +1,11 @@
-import { Types } from "mongoose";
 import { transporter } from "../utils/mailHandler";
-import { generateResetPasswordToken } from "../utils/tokens";
 
 export const sendVerificationMail = async (email: string, token: string) => {
   const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
   const verificationLink = `${baseUrl.replace(
     /\/+$/,
     ""
-  )}/token/${encodeURIComponent(token)}`;
+  )}/auth/verify/${encodeURIComponent(token)}`;
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
@@ -33,17 +31,30 @@ export const sendVerificationOtp = async (email: string, otp: string) => {
   await transporter.sendMail(mailOptions);
 };
 
-export const sendForgetPasswordLink = async (user: MailUserPayload) => {
-  const token = generateResetPasswordToken(user._id, user.email);
-  const resetPasswordLink = `http://localhost:5173/auth/reset-password?token=${token}`;
+export const sendResetPasswordMail = async (email: string, token: string) => {
+  const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const resetLink = `${baseUrl.replace(
+    /\/+$/,
+    ""
+  )}/auth/reset-password/${encodeURIComponent(token)}`;
+
   const mailOptions = {
     from: process.env.EMAIL_USER,
-    to: user?.email,
+    to: email,
     subject: "Reset Your Password",
     html: `
-      <p>Hello, you requested a password reset</p>
-      <a href="${resetPasswordLink}">Click here to reset your password</a>
-      <p>This link will expire in 15 minutes.</p>
+      <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2>Password Reset Request</h2>
+        <p>You requested to reset your password. Click the button below to create a new password:</p>
+        <a href="${resetLink}"
+           style="display: inline-block; padding: 12px 24px; background-color: #4F46E5; color: white; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+          Reset Password
+        </a>
+        <p>This link will expire in 15 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <hr style="margin: 20px 0;">
+        <p style="color: #666; font-size: 12px;">For security reasons, this link can only be used once.</p>
+      </div>
     `,
   };
   await transporter.sendMail(mailOptions);
