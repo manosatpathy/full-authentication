@@ -62,7 +62,6 @@ export const AppContextProvider = ({
     const cleanupFunction = () => {
       queryClient.setQueryData(["me"], null);
       queryClient.removeQueries({ queryKey: ["me"] });
-      navigate("/", { replace: true });
     };
 
     setClientCleanup(cleanupFunction);
