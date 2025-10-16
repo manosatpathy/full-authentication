@@ -19,7 +19,7 @@ const ForgetPassword = () => {
         message: "Password reset link sent to your email.",
         type: "SUCCESS",
       });
-      navigate("/auth/reset-password");
+      navigate("/");
     },
     onError: (error) => {
       showToast({ message: error.message, type: "ERROR" });
