@@ -34,6 +34,7 @@ axiosInstance.interceptors.request.use(
   (config) => {
     if (
       config.method === "post" ||
+      config.method === "patch" ||
       config.method === "put" ||
       config.method === "delete"
     ) {
