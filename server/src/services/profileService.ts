@@ -54,8 +54,8 @@ export const validateAndUpdateUsername = async (
   if (availabilityCheck.isSame) {
     return {
       updated: false,
-      isSame: true,
-      available: true,
+      isSame: availabilityCheck.isSame,
+      available: availabilityCheck.available,
       message: availabilityCheck.message,
     };
   }
@@ -64,12 +64,15 @@ export const validateAndUpdateUsername = async (
     throw new ErrorHandler("Username already exists", 422);
   }
 
-  await User.findByIdAndUpdate(userId, { username: newUsername });
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { username: newUsername },
+    { new: true }
+  );
 
   return {
     updated: true,
-    isSame: false,
-    available: true,
+    updatedUser,
     message: "Username updated successfully",
   };
 };
