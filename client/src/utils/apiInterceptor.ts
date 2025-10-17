@@ -1,4 +1,4 @@
-import { axiosInstance, refreshAxiosInstance } from "./axiosInstance";
+import { axiosInstance, refreshAxiosInstance } from "./axiosConfig";
 import type {
   AxiosError,
   AxiosResponse,
