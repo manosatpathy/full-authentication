@@ -54,7 +54,7 @@ const failedQueue: Array<FailedQueueItem> = [];
 let isRefreshingCsrf = false;
 const failedCsrfQueue: Array<FailedQueueItem> = [];
 
-const processQueue = (error: unknown, token: string | null = null): void => {
+const processQueue = (error: unknown): void => {
   failedQueue.forEach(({ resolve, reject }) => {
     if (error) {
       reject(error);
@@ -65,10 +65,7 @@ const processQueue = (error: unknown, token: string | null = null): void => {
   failedQueue.length = 0;
 };
 
-const processCsrfQueue = (
-  error: unknown,
-  token: string | null = null
-): void => {
+const processCsrfQueue = (error: unknown): void => {
   failedCsrfQueue.forEach(({ resolve, reject }) => {
     if (error) {
       reject(error);
