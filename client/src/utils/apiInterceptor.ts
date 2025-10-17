@@ -1,4 +1,4 @@
-import axiosInstance, { refreshAxiosInstance } from "./axiosInstance";
+import { axiosInstance, refreshAxiosInstance } from "./axiosInstance";
 
 interface FailedQueueItem {
   resolve: (value?: unknown) => void;
