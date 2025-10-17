@@ -1,4 +1,9 @@
 import { axiosInstance, refreshAxiosInstance } from "./axiosInstance";
+import type {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 interface FailedQueueItem {
   resolve: (value?: unknown) => void;
@@ -31,7 +36,7 @@ const getCookie = (name: string) => {
 };
 
 axiosInstance.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     if (
       config.method === "post" ||
       config.method === "patch" ||
@@ -45,7 +50,7 @@ axiosInstance.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: AxiosError) => Promise.reject(error)
 );
 
 let isRefreshing = false;
@@ -77,10 +82,12 @@ const processCsrfQueue = (error: unknown): void => {
 };
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-    const errorCode = error.response?.data?.code || "";
+  (response: AxiosResponse) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & {
+      _retry?: boolean;
+    };
+    const errorCode = (error.response?.data as { code?: string })?.code || "";
 
     if (isLoggingOut) {
       return Promise.reject(error);
