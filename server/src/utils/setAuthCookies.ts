@@ -8,10 +8,13 @@ export const setAuthCookies = (
 ) => {
   const isProduction = process.env.NODE_ENV === "production";
 
+  const domain = isProduction ? ".manosatpathy.in" : undefined;
+
   res.cookie("accessToken", accessToken, {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
+    domain,
     maxAge: 15 * 60 * 1000,
   });
 
@@ -19,6 +22,7 @@ export const setAuthCookies = (
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
+    domain,
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 
@@ -26,6 +30,7 @@ export const setAuthCookies = (
     httpOnly: false,
     secure: true,
     sameSite: "none",
+    domain,
     maxAge: 60 * 60 * 1000,
   });
 };
