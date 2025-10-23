@@ -3,7 +3,7 @@ import UserCard from "@/components/UserCard";
 
 const Profile = () => {
   return (
-    <div className="flex max-w-full flex-row gap-4 flex-1/2">
+    <div className="flex gap-4 max-w-full md:flex-row flex-col">
       <UserCard />
       <AccountDetails />
     </div>

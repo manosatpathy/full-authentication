@@ -7,19 +7,21 @@ const UserCard = () => {
 
   return (
     <Card className="w-full max-w-sm max-h-[510px] rounded-2xl shadow-xl border-none bg-gradient-to-br from-white via-gray-50 to-blue-100">
-      <CardContent className="flex flex-col justify-center items-center gap-10 p-8">
-        <div className="flex flex-col gap-3 justify-center items-center">
+      <CardContent className="flex flex-col justify-center items-center gap-10 md:p-8">
+        <div className="flex flex-row md:flex-col gap-7 md:gap-3 justify-center items-center">
           <div className="rounded-full bg-gradient-to-tr from-blue-400 via-blue-300 to-purple-300 p-2 shadow-lg mb-2">
             <RxAvatar size={70} className="text-white" />
           </div>
-          <h3 className="text-xl font-bold text-gray-800 tracking-wide">
-            {user?.username}
-          </h3>
-          <h4 className="text-sm font-medium text-blue-600 uppercase tracking-widest">
-            {user?.role}
-          </h4>
+          <div className="flex flex-col items-center gap-1">
+            <h3 className="text-xl font-bold text-gray-800 tracking-wide">
+              {user?.username}
+            </h3>
+            <h4 className="text-sm font-medium text-blue-600 uppercase tracking-widest">
+              {user?.role}
+            </h4>
+          </div>
         </div>
-        <div className="flex flex-col justify-center items-center w-full gap-1">
+        <div className="hidden flex-col justify-center items-center w-full gap-1  md:flex">
           <p className="text-gray-600">{user?.email}</p>
           <p className="text-green-600 font-semibold text-xs bg-green-50 px-2 py-1 rounded-full mt-1">
             Verified
