@@ -277,9 +277,6 @@ Authorization:  YOUR_ACCESS_TOKEN
 ### Admin Dashboard
 ![Admin Dashboard](screenshots/admin-dashboard.png)
 
-### Email Verification
-![Email](screenshots/email-verification.png)
-
 ### Password Reset
 ![Reset](screenshots/password-reset.png)
 
