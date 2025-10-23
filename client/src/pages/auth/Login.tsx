@@ -17,16 +17,13 @@ const Login = () => {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm<LoginFormType>({
     resolver: zodResolver(loginSchema),
   });
-  const identifier = watch("identifier");
 
   const { mutate, isPending } = useMutation({
     mutationFn: apiClient.login,
     onSuccess: async (data) => {
-      localStorage.setItem("identifier", identifier);
       localStorage.setItem("otpExpiry", data.otpExpiry);
       showToast({
         message: "Verification OTP has been sent to your Email!",

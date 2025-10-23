@@ -89,17 +89,10 @@ export const logOut = async () => {
   }
 };
 
-export const verifyEmail = async ({
-  otp,
-  identifier,
-}: {
-  otp: string;
-  identifier: string;
-}) => {
+export const verifyEmail = async ({ otp }: { otp: string }) => {
   try {
     const response = await axiosInstance.post("/auth/verify", {
       otp,
-      identifier,
     });
     return response.data;
   } catch (error) {

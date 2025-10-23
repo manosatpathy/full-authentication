@@ -118,18 +118,29 @@ export const verifyOtpController = async (
   next: NextFunction
 ) => {
   try {
-    const { identifier, otp } = req.body;
-    let user = await findUser({ email: identifier, username: identifier }, [
-      "id",
-      "username",
-      "email",
-      "role",
-    ]);
-    if (!user) {
-      throw new ErrorHandler("User not found", 404);
+    const { otp } = req.body;
+    const verificationSessionId = req.cookies.v_s;
+
+    if (!verificationSessionId) {
+      throw new ErrorHandler(
+        "Verification session expired. Please login again.",
+        401
+      );
     }
 
-    const otpKey = `otp:${user.email}`;
+    const verificationKey = `pending-verification:${verificationSessionId}`;
+    const verificationSessionData = await redisClient.get(verificationKey);
+
+    if (!verificationSessionData) {
+      throw new ErrorHandler(
+        "Verification session expired. Please login again.",
+        401
+      );
+    }
+
+    const { email, userId } = JSON.parse(verificationSessionData);
+
+    const otpKey = `otp:${email}`;
     const storedOtp = await redisClient.get(otpKey);
 
     if (!storedOtp) {
@@ -140,7 +151,27 @@ export const verifyOtpController = async (
       throw new ErrorHandler("Invalid OTP", 400);
     }
 
-    await redisClient.del(otpKey);
+    const user = await findUser({ id: userId }, [
+      "id",
+      "username",
+      "email",
+      "role",
+    ]);
+
+    if (!user) {
+      throw new ErrorHandler("User not found", 404);
+    }
+
+    await Promise.all([
+      redisClient.del(otpKey),
+      redisClient.del(verificationKey),
+    ]);
+
+    res.clearCookie("v_s", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    });
 
     const activeSessionKey = `active_session:${user._id}`;
     const existingSession = await redisClient.getDel(activeSessionKey);

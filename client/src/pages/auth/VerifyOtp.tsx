@@ -41,9 +41,7 @@ const VerifyOTP = () => {
   const { mutate: resendLink } = useResendOtp(setTimeLeft);
 
   const onSubmit = () => {
-    const identifier = localStorage.getItem("identifier");
-    if (!identifier) return;
-    verify({ otp: otpFields.join(""), identifier });
+    verify({ otp: otpFields.join("") });
   };
 
   return (
