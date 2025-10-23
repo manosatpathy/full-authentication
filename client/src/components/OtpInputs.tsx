@@ -47,7 +47,7 @@ const OtpInputs = ({ otpFields, setOtpFields, disabled }: Props) => {
   };
 
   return (
-    <div>
+    <div className="flex flex-row justify-center gap-2">
       {otpFields.map((value, index) => (
         <input
           key={index}
@@ -58,7 +58,7 @@ const OtpInputs = ({ otpFields, setOtpFields, disabled }: Props) => {
             inputRef.current[index] = el;
           }}
           disabled={disabled}
-          className="h-14 w-14 p-0.5 m-3 outline text-center rounded-2xl bg-slate-50 text-black"
+          className="h-12 w-12 md:h-14 md:w-14 p-0.5 md:m-3 outline text-center rounded-2xl bg-slate-50 text-black"
           onChange={(e) => handleChange(e.target.value, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
         />

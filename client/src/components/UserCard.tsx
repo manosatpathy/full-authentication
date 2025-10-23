@@ -6,9 +6,9 @@ const UserCard = () => {
   const { user } = useAppContext();
 
   return (
-    <Card className="w-full max-w-sm max-h-[510px] rounded-2xl shadow-xl border-none bg-gradient-to-br from-white via-gray-50 to-blue-100">
+    <Card className="w-full mx-auto md:max-w-sm max-h-[510px] rounded-2xl shadow-xl border-none bg-gradient-to-br from-white via-gray-50 to-blue-100">
       <CardContent className="flex flex-col justify-center items-center gap-10 md:p-8">
-        <div className="flex flex-row md:flex-col gap-7 md:gap-3 justify-center items-center">
+        <div className="flex flex-row md:flex-col gap-7 md:gap-3 w-full justify-evenly items-center">
           <div className="rounded-full bg-gradient-to-tr from-blue-400 via-blue-300 to-purple-300 p-2 shadow-lg mb-2">
             <RxAvatar size={70} className="text-white" />
           </div>

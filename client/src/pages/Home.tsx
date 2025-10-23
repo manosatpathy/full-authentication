@@ -19,7 +19,7 @@ const Home = () => {
           </span>
         </p>
         {isAuthenticated ? (
-          <h2 className="text-2xl font-semibold">
+          <h2 className="sm:text-2xl font-semibold">
             Welcome back, {user?.username}! 👋
           </h2>
         ) : (
